@@ -105,70 +105,55 @@ class Rook extends Piece {
 
     moveSet(): [number, number][] {
         var moveSet: [number, number][] = [];
-        moveSet = this.moveSetTopBottom(moveSet);
-        moveSet = this.moveSetRightLeft(moveSet);
+        this.moveSetTopBottom(moveSet);
+        this.moveSetRightLeft(moveSet);
         return moveSet;
     }
 
-    moveSetTopBottom(moveSet: [number, number][]): [number, number][] {
+    validateMove(moveSet: [number, number][], move: [number, number]): boolean {
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) {
+            moveSet.push(move);
+            return true
+        }
+        
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+
+        return false;
+    }
+
+    moveSetTopBottom(moveSet: [number, number][]): void {
         let move: [number, number];
         let piece: piece | false;
 
         for (let i = this.positionY + 1 ; i <= 8 ; i++){
-            move = [this.positionX, i];
-            piece = foundPieceBySquare(move);
-            if (piece){
-                if (piece.color != this.color){
-                    moveSet.push(move);
-                }
-                break;
-            } 
-            moveSet.push([this.positionX, i]);
+            if (!this.validateMove(moveSet, [this.positionX, i])) break;
         }
 
         for (let i = this.positionY-1 ; i >= 1 ; i--){
-            move = [this.positionX, i];
-            piece = foundPieceBySquare(move);
-            if (piece){
-                if (piece.color != this.color){
-                    moveSet.push(move);
-                }
-                break;
-            } 
-            moveSet.push([this.positionX, i]);
+            if (!this.validateMove(moveSet, [this.positionX, i])) break;
         }
-
-        return moveSet;
     }
     
-    moveSetRightLeft(moveSet: [number, number][]): [number, number][] {
+    moveSetRightLeft(moveSet: [number, number][]): void {
         let move: [number, number];
         let piece: piece | false;
 
         for (let i = this.positionX + 1 ; i <= 8 ; i++){
-            move = [i, this.positionY];
-            piece = foundPieceBySquare(move);
-            if (piece){
-                if (piece.color != this.color){
-                    moveSet.push(move);
-                }
-                break;
-            } 
-            moveSet.push([i, this.positionY]);
+            if (!this.validateMove(moveSet, [i, this.positionY])) break;
         }
 
         for (let i = this.positionX - 1 ; i >= 1 ; i--){
-            move = [i, this.positionY];
-            piece = foundPieceBySquare(move);
-            if (piece){
-                if (piece.color != this.color){
-                    moveSet.push(move);
-                }
-                break;
-            } 
-            moveSet.push([i, this.positionY]);
+            if (!this.validateMove(moveSet, [i, this.positionY])) break;
         }
-        return moveSet;
     }
 
 }
@@ -181,7 +166,6 @@ class Knight extends Piece {
     moveSet(): [number, number][] {
         var moveSet: [number, number][] = [];
         let move: [number, number] | false;
-        let piece: piece | false;
 
         move = this.validateMove([this.positionX-2, this.positionY+1]);
         if (move) moveSet.push(move);
@@ -212,23 +196,16 @@ class Knight extends Piece {
 
     validateMove(move: [number, number]): [number, number] | false {
 
-        if (!checkIfPositionsExists(move)) {
-            return false;
-        }
+        if (!checkIfPositionsExists(move)) return false;
 
         const piece: Piece | false = foundPieceBySquare(move);
     
-        if (!piece) {
-            return move;
-        }
+        if (!piece) return move;
         
-        if (piece.color !== this.color) {
-            return move;
-        }
+        if (piece.color !== this.color) return move;
 
         return false;
     }
-    
 
 }
 
@@ -238,76 +215,73 @@ class Bishop extends Piece {
     }
 
     moveSet(): [number, number][] {
-        var moveSet: [number, number][] = [];
-        moveSet = this.moveSetTopLeft(moveSet);
-        moveSet = this.moveSetTopRight(moveSet);
-        moveSet = this.moveSetBottomLeft(moveSet);
-        moveSet = this.moveSetBottomRight(moveSet);
+        const moveSet: [number, number][] = [];
+        this.moveSetTopLeft(moveSet);
+        this.moveSetTopRight(moveSet);
+        this.moveSetBottomLeft(moveSet);
+        this.moveSetBottomRight(moveSet);
         return moveSet;
     }
 
-    moveSetTopLeft(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
-        while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                if(this.positionX != x || this.positionY != y) moveSet.push(position);
-                x -= 1;
-                y += 1;
-            }else{
-                break;
-            }
+    validateMove(moveSet: [number, number][], move: [number, number]): boolean {
+        if (!checkIfPositionsExists(move)) {
+            return false;
         }
-        return moveSet;
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) {
+            moveSet.push(move);
+            return true
+        }
+        
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+
+        return false;
+    }
+
+    moveSetTopLeft(moveSet: [number, number][]): void {
+        let x: number = this.positionX - 1;
+        let y: number = this.positionY + 1;
+        while(true){
+            if (!this.validateMove(moveSet, [x, y])) break
+            x -= 1;
+            y += 1;
+        }
     }
     
-    moveSetTopRight(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
+    moveSetTopRight(moveSet: [number, number][]): void {
+        let x: number = this.positionX + 1;
+        let y: number = this.positionY + 1;
         while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                if(this.positionX != x || this.positionY != y) moveSet.push(position);
-                x += 1;
-                y += 1;
-            }else{
-                break;
-            }
+            if (!this.validateMove(moveSet, [x, y])) break
+            x += 1;
+            y += 1;
         }
-        return moveSet;
+
     }
 
-    moveSetBottomLeft(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
+    moveSetBottomLeft(moveSet: [number, number][]): void {
+        let x: number = this.positionX - 1;
+        let y: number = this.positionY - 1;
         while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                if(this.positionX != x || this.positionY != y) moveSet.push(position);
-                x -= 1;
-                y -= 1;
-            }else{
-                break;
-            }
+            if (!this.validateMove(moveSet, [x, y])) break
+            x -= 1;
+            y -= 1;
         }
-        return moveSet;
     }
 
-    moveSetBottomRight(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
+    moveSetBottomRight(moveSet: [number, number][]): void {
+        let x: number = this.positionX + 1;
+        let y: number = this.positionY - 1;
         while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                if(this.positionX != x || this.positionY != y) moveSet.push(position);
-                x += 1;
-                y -= 1;
-            }else{
-                break;
-            }
+            if (!this.validateMove(moveSet, [x, y])) break
+            x += 1;
+            y -= 1;
         }
-        return moveSet;
     }
 
 }
@@ -319,94 +293,122 @@ class Queen extends Piece {
 
     moveSet(): [number, number][] {
         var moveSet: [number, number][] = [];
-        moveSet = this.moveSetTopLeft(moveSet);
-        moveSet = this.moveSetTopRight(moveSet);
-        moveSet = this.moveSetBottomLeft(moveSet);
-        moveSet = this.moveSetBottomRight(moveSet);
-        moveSet = this.moveSetTopBottom(moveSet);
-        moveSet = this.moveSetRightLeft(moveSet);
+        this.moveSetTopLeft(moveSet);
+        this.moveSetTopRight(moveSet);
+        this.moveSetBottomLeft(moveSet);
+        this.moveSetBottomRight(moveSet);
+        this.moveSetTopBottom(moveSet);
+        this.moveSetRightLeft(moveSet);
         return moveSet;
     }
 
-    moveSetTopLeft(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
-        while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                moveSet.push(position);
-                x -= 1;
-                y += 1;
-            }else{
-                break;
-            }
+    validateMovestraight(moveSet: [number, number][], move: [number, number]): boolean {
+        if (!checkIfPositionsExists(move)) {
+            return false;
         }
-        return moveSet;
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) {
+            moveSet.push(move);
+            return true
+        }
+        
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+
+        return false;
+    }
+
+    moveSetTopBottom(moveSet: [number, number][]): void {
+        let move: [number, number];
+        let piece: piece | false;
+
+        for (let i = this.positionY + 1 ; i <= 8 ; i++){
+            if (!this.validateMovestraight(moveSet, [this.positionX, i])) break;
+        }
+
+        for (let i = this.positionY-1 ; i >= 1 ; i--){
+            if (!this.validateMovestraight(moveSet, [this.positionX, i])) break;
+        }
     }
     
-    moveSetTopRight(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
-        while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                moveSet.push(position);
-                x += 1;
-                y += 1;
-            }else{
-                break;
-            }
+    moveSetRightLeft(moveSet: [number, number][]): void {
+        let move: [number, number];
+        let piece: piece | false;
+
+        for (let i = this.positionX + 1 ; i <= 8 ; i++){
+            if (!this.validateMovestraight(moveSet, [i, this.positionY])) break;
         }
-        return moveSet;
+
+        for (let i = this.positionX - 1 ; i >= 1 ; i--){
+            if (!this.validateMovestraight(moveSet, [i, this.positionY])) break;
+        }
     }
 
-    moveSetBottomLeft(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
-        while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                moveSet.push(position);
-                x -= 1;
-                y -= 1;
-            }else{
-                break;
-            }
+    validateMoveDiagonal(moveSet: [number, number][], move: [number, number]): boolean {
+        if (!checkIfPositionsExists(move)) {
+            return false;
         }
-        return moveSet;
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) {
+            moveSet.push(move);
+            return true
+        }
+        
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+
+        return false;
     }
 
-    moveSetBottomRight(moveSet: [number, number][]): [number, number][] {
-        let x: number = this.positionX;
-        let y: number = this.positionY;
+    moveSetTopLeft(moveSet: [number, number][]): void {
+        let x: number = this.positionX - 1;
+        let y: number = this.positionY + 1;
         while(true){
-            const position: [number, number] | false = checkIfPositionsExists([x, y]);
-            if (position){
-                moveSet.push(position);
-                x += 1;
-                y -= 1;
-            }else{
-                break;
-            }
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            x -= 1;
+            y += 1;
         }
-        return moveSet;
-    }
-
-    moveSetTopBottom(moveSet: [number, number][]): [number, number][] {
-        for (let i = 1 ; i <= 8 ; i++){
-            if (this.positionY == i) continue;
-            moveSet.push([this.positionX, i]);
-        }
-        return moveSet;
     }
     
-    moveSetRightLeft(moveSet: [number, number][]): [number, number][] {
-        for (let i = 8 ; i >= 1 ; i--){
-            if (this.positionX == i) continue;
-            moveSet.push([i, this.positionY]);
+    moveSetTopRight(moveSet: [number, number][]): void {
+        let x: number = this.positionX + 1;
+        let y: number = this.positionY + 1;
+        while(true){
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            x += 1;
+            y += 1;
         }
-        return moveSet;
+
     }
+
+    moveSetBottomLeft(moveSet: [number, number][]): void {
+        let x: number = this.positionX - 1;
+        let y: number = this.positionY - 1;
+        while(true){
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            x -= 1;
+            y -= 1;
+        }
+    }
+
+    moveSetBottomRight(moveSet: [number, number][]): void {
+        let x: number = this.positionX + 1;
+        let y: number = this.positionY - 1;
+        while(true){
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            x += 1;
+            y -= 1;
+        }
+    }
+
 
 }
 
@@ -418,31 +420,44 @@ class King extends Piece {
     moveSet(): [number, number][] {
         var moveSet: [number, number][] = [];
 
-        const moveleft = checkIfPositionsExists([this.positionX-1, this.positionY]);
+        const moveleft = this.validateMove([this.positionX-1, this.positionY]);
         if (moveleft) moveSet.push(moveleft);
 
-        const moveleftTop = checkIfPositionsExists([this.positionX-1, this.positionY+1]);
+        const moveleftTop = this.validateMove([this.positionX-1, this.positionY+1]);
         if (moveleftTop) moveSet.push(moveleftTop);
 
-        const movetop = checkIfPositionsExists([this.positionX, this.positionY+1]);
+        const movetop = this.validateMove([this.positionX, this.positionY+1]);
         if (movetop) moveSet.push(movetop);
 
-        const moveTopRight = checkIfPositionsExists([this.positionX+1, this.positionY+1]);
+        const moveTopRight = this.validateMove([this.positionX+1, this.positionY+1]);
         if (moveTopRight) moveSet.push(moveTopRight);
 
-        const moveRight = checkIfPositionsExists([this.positionX+1, this.positionY]);
+        const moveRight = this.validateMove([this.positionX+1, this.positionY]);
         if (moveRight) moveSet.push(moveRight);
 
-        const moveRightBottom = checkIfPositionsExists([this.positionX+1, this.positionY-1]);
+        const moveRightBottom = this.validateMove([this.positionX+1, this.positionY-1]);
         if (moveRightBottom) moveSet.push(moveRightBottom);
 
-        const moveBottom = checkIfPositionsExists([this.positionX, this.positionY-1]);
+        const moveBottom = this.validateMove([this.positionX, this.positionY-1]);
         if (moveBottom) moveSet.push(moveBottom);
 
-        const moveBottomLeft = checkIfPositionsExists([this.positionX-1, this.positionY-1]);
+        const moveBottomLeft = this.validateMove([this.positionX-1, this.positionY-1]);
         if (moveBottomLeft) moveSet.push(moveBottomLeft);
 
         return moveSet;
+    }
+
+    validateMove(move: [number, number]): [number, number] | false {
+
+        if (!checkIfPositionsExists(move)) return false;
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) return move;
+        
+        if (piece.color !== this.color) return move;
+
+        return false;
     }
 
 }
@@ -506,9 +521,9 @@ const parameters: {
         new Pawn([7, 2], "white"),
         new Pawn([8, 2], "white"),
         
-        new Knight([3, 3], "white"),
-        new Knight([6, 3], "black"),
-        new Knight([4, 4], "white")
+        new King([3, 3], "white"),
+        new King([6, 3], "black"),
+        new King([5, 4], "white")
     ]
 };
 

@@ -97,63 +97,48 @@ var Rook = /** @class */ (function (_super) {
     }
     Rook.prototype.moveSet = function () {
         var moveSet = [];
-        moveSet = this.moveSetTopBottom(moveSet);
-        moveSet = this.moveSetRightLeft(moveSet);
+        this.moveSetTopBottom(moveSet);
+        this.moveSetRightLeft(moveSet);
         return moveSet;
+    };
+    Rook.prototype.validateMove = function (moveSet, move) {
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+        var piece = foundPieceBySquare(move);
+        if (!piece) {
+            moveSet.push(move);
+            return true;
+        }
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+        return false;
     };
     Rook.prototype.moveSetTopBottom = function (moveSet) {
         var move;
         var piece;
         for (var i = this.positionY + 1; i <= 8; i++) {
-            move = [this.positionX, i];
-            piece = foundPieceBySquare(move);
-            if (piece) {
-                if (piece.color != this.color) {
-                    moveSet.push(move);
-                }
+            if (!this.validateMove(moveSet, [this.positionX, i]))
                 break;
-            }
-            moveSet.push([this.positionX, i]);
         }
         for (var i = this.positionY - 1; i >= 1; i--) {
-            move = [this.positionX, i];
-            piece = foundPieceBySquare(move);
-            if (piece) {
-                if (piece.color != this.color) {
-                    moveSet.push(move);
-                }
+            if (!this.validateMove(moveSet, [this.positionX, i]))
                 break;
-            }
-            moveSet.push([this.positionX, i]);
         }
-        return moveSet;
     };
     Rook.prototype.moveSetRightLeft = function (moveSet) {
         var move;
         var piece;
         for (var i = this.positionX + 1; i <= 8; i++) {
-            move = [i, this.positionY];
-            piece = foundPieceBySquare(move);
-            if (piece) {
-                if (piece.color != this.color) {
-                    moveSet.push(move);
-                }
+            if (!this.validateMove(moveSet, [i, this.positionY]))
                 break;
-            }
-            moveSet.push([i, this.positionY]);
         }
         for (var i = this.positionX - 1; i >= 1; i--) {
-            move = [i, this.positionY];
-            piece = foundPieceBySquare(move);
-            if (piece) {
-                if (piece.color != this.color) {
-                    moveSet.push(move);
-                }
+            if (!this.validateMove(moveSet, [i, this.positionY]))
                 break;
-            }
-            moveSet.push([i, this.positionY]);
         }
-        return moveSet;
     };
     return Rook;
 }(Piece));
@@ -165,7 +150,6 @@ var Knight = /** @class */ (function (_super) {
     Knight.prototype.moveSet = function () {
         var moveSet = [];
         var move;
-        var piece;
         move = this.validateMove([this.positionX - 2, this.positionY + 1]);
         if (move)
             moveSet.push(move);
@@ -193,16 +177,13 @@ var Knight = /** @class */ (function (_super) {
         return moveSet;
     };
     Knight.prototype.validateMove = function (move) {
-        if (!checkIfPositionsExists(move)) {
+        if (!checkIfPositionsExists(move))
             return false;
-        }
         var piece = foundPieceBySquare(move);
-        if (!piece) {
+        if (!piece)
             return move;
-        }
-        if (piece.color !== this.color) {
+        if (piece.color !== this.color)
             return move;
-        }
         return false;
     };
     return Knight;
@@ -214,79 +195,66 @@ var Bishop = /** @class */ (function (_super) {
     }
     Bishop.prototype.moveSet = function () {
         var moveSet = [];
-        moveSet = this.moveSetTopLeft(moveSet);
-        moveSet = this.moveSetTopRight(moveSet);
-        moveSet = this.moveSetBottomLeft(moveSet);
-        moveSet = this.moveSetBottomRight(moveSet);
+        this.moveSetTopLeft(moveSet);
+        this.moveSetTopRight(moveSet);
+        this.moveSetBottomLeft(moveSet);
+        this.moveSetBottomRight(moveSet);
         return moveSet;
+    };
+    Bishop.prototype.validateMove = function (moveSet, move) {
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+        var piece = foundPieceBySquare(move);
+        if (!piece) {
+            moveSet.push(move);
+            return true;
+        }
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+        return false;
     };
     Bishop.prototype.moveSetTopLeft = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
+        var x = this.positionX - 1;
+        var y = this.positionY + 1;
         while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                if (this.positionX != x || this.positionY != y)
-                    moveSet.push(position);
-                x -= 1;
-                y += 1;
-            }
-            else {
+            if (!this.validateMove(moveSet, [x, y]))
                 break;
-            }
+            x -= 1;
+            y += 1;
         }
-        return moveSet;
     };
     Bishop.prototype.moveSetTopRight = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
+        var x = this.positionX + 1;
+        var y = this.positionY + 1;
         while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                if (this.positionX != x || this.positionY != y)
-                    moveSet.push(position);
-                x += 1;
-                y += 1;
-            }
-            else {
+            if (!this.validateMove(moveSet, [x, y]))
                 break;
-            }
+            x += 1;
+            y += 1;
         }
-        return moveSet;
     };
     Bishop.prototype.moveSetBottomLeft = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
+        var x = this.positionX - 1;
+        var y = this.positionY - 1;
         while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                if (this.positionX != x || this.positionY != y)
-                    moveSet.push(position);
-                x -= 1;
-                y -= 1;
-            }
-            else {
+            if (!this.validateMove(moveSet, [x, y]))
                 break;
-            }
+            x -= 1;
+            y -= 1;
         }
-        return moveSet;
     };
     Bishop.prototype.moveSetBottomRight = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
+        var x = this.positionX + 1;
+        var y = this.positionY - 1;
         while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                if (this.positionX != x || this.positionY != y)
-                    moveSet.push(position);
-                x += 1;
-                y -= 1;
-            }
-            else {
+            if (!this.validateMove(moveSet, [x, y]))
                 break;
-            }
+            x += 1;
+            y -= 1;
         }
-        return moveSet;
     };
     return Bishop;
 }(Piece));
@@ -297,93 +265,107 @@ var Queen = /** @class */ (function (_super) {
     }
     Queen.prototype.moveSet = function () {
         var moveSet = [];
-        moveSet = this.moveSetTopLeft(moveSet);
-        moveSet = this.moveSetTopRight(moveSet);
-        moveSet = this.moveSetBottomLeft(moveSet);
-        moveSet = this.moveSetBottomRight(moveSet);
-        moveSet = this.moveSetTopBottom(moveSet);
-        moveSet = this.moveSetRightLeft(moveSet);
+        this.moveSetTopLeft(moveSet);
+        this.moveSetTopRight(moveSet);
+        this.moveSetBottomLeft(moveSet);
+        this.moveSetBottomRight(moveSet);
+        this.moveSetTopBottom(moveSet);
+        this.moveSetRightLeft(moveSet);
         return moveSet;
     };
-    Queen.prototype.moveSetTopLeft = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
-        while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                moveSet.push(position);
-                x -= 1;
-                y += 1;
-            }
-            else {
-                break;
-            }
+    Queen.prototype.validateMovestraight = function (moveSet, move) {
+        if (!checkIfPositionsExists(move)) {
+            return false;
         }
-        return moveSet;
-    };
-    Queen.prototype.moveSetTopRight = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
-        while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                moveSet.push(position);
-                x += 1;
-                y += 1;
-            }
-            else {
-                break;
-            }
+        var piece = foundPieceBySquare(move);
+        if (!piece) {
+            moveSet.push(move);
+            return true;
         }
-        return moveSet;
-    };
-    Queen.prototype.moveSetBottomLeft = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
-        while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                moveSet.push(position);
-                x -= 1;
-                y -= 1;
-            }
-            else {
-                break;
-            }
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
         }
-        return moveSet;
-    };
-    Queen.prototype.moveSetBottomRight = function (moveSet) {
-        var x = this.positionX;
-        var y = this.positionY;
-        while (true) {
-            var position = checkIfPositionsExists([x, y]);
-            if (position) {
-                moveSet.push(position);
-                x += 1;
-                y -= 1;
-            }
-            else {
-                break;
-            }
-        }
-        return moveSet;
+        return false;
     };
     Queen.prototype.moveSetTopBottom = function (moveSet) {
-        for (var i = 1; i <= 8; i++) {
-            if (this.positionY == i)
-                continue;
-            moveSet.push([this.positionX, i]);
+        var move;
+        var piece;
+        for (var i = this.positionY + 1; i <= 8; i++) {
+            if (!this.validateMovestraight(moveSet, [this.positionX, i]))
+                break;
         }
-        return moveSet;
+        for (var i = this.positionY - 1; i >= 1; i--) {
+            if (!this.validateMovestraight(moveSet, [this.positionX, i]))
+                break;
+        }
     };
     Queen.prototype.moveSetRightLeft = function (moveSet) {
-        for (var i = 8; i >= 1; i--) {
-            if (this.positionX == i)
-                continue;
-            moveSet.push([i, this.positionY]);
+        var move;
+        var piece;
+        for (var i = this.positionX + 1; i <= 8; i++) {
+            if (!this.validateMovestraight(moveSet, [i, this.positionY]))
+                break;
         }
-        return moveSet;
+        for (var i = this.positionX - 1; i >= 1; i--) {
+            if (!this.validateMovestraight(moveSet, [i, this.positionY]))
+                break;
+        }
+    };
+    Queen.prototype.validateMoveDiagonal = function (moveSet, move) {
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+        var piece = foundPieceBySquare(move);
+        if (!piece) {
+            moveSet.push(move);
+            return true;
+        }
+        if (piece.color !== this.color) {
+            moveSet.push(move);
+            return false;
+        }
+        return false;
+    };
+    Queen.prototype.moveSetTopLeft = function (moveSet) {
+        var x = this.positionX - 1;
+        var y = this.positionY + 1;
+        while (true) {
+            if (!this.validateMoveDiagonal(moveSet, [x, y]))
+                break;
+            x -= 1;
+            y += 1;
+        }
+    };
+    Queen.prototype.moveSetTopRight = function (moveSet) {
+        var x = this.positionX + 1;
+        var y = this.positionY + 1;
+        while (true) {
+            if (!this.validateMoveDiagonal(moveSet, [x, y]))
+                break;
+            x += 1;
+            y += 1;
+        }
+    };
+    Queen.prototype.moveSetBottomLeft = function (moveSet) {
+        var x = this.positionX - 1;
+        var y = this.positionY - 1;
+        while (true) {
+            if (!this.validateMoveDiagonal(moveSet, [x, y]))
+                break;
+            x -= 1;
+            y -= 1;
+        }
+    };
+    Queen.prototype.moveSetBottomRight = function (moveSet) {
+        var x = this.positionX + 1;
+        var y = this.positionY - 1;
+        while (true) {
+            if (!this.validateMoveDiagonal(moveSet, [x, y]))
+                break;
+            x += 1;
+            y -= 1;
+        }
     };
     return Queen;
 }(Piece));
@@ -394,31 +376,41 @@ var King = /** @class */ (function (_super) {
     }
     King.prototype.moveSet = function () {
         var moveSet = [];
-        var moveleft = checkIfPositionsExists([this.positionX - 1, this.positionY]);
+        var moveleft = this.validateMove([this.positionX - 1, this.positionY]);
         if (moveleft)
             moveSet.push(moveleft);
-        var moveleftTop = checkIfPositionsExists([this.positionX - 1, this.positionY + 1]);
+        var moveleftTop = this.validateMove([this.positionX - 1, this.positionY + 1]);
         if (moveleftTop)
             moveSet.push(moveleftTop);
-        var movetop = checkIfPositionsExists([this.positionX, this.positionY + 1]);
+        var movetop = this.validateMove([this.positionX, this.positionY + 1]);
         if (movetop)
             moveSet.push(movetop);
-        var moveTopRight = checkIfPositionsExists([this.positionX + 1, this.positionY + 1]);
+        var moveTopRight = this.validateMove([this.positionX + 1, this.positionY + 1]);
         if (moveTopRight)
             moveSet.push(moveTopRight);
-        var moveRight = checkIfPositionsExists([this.positionX + 1, this.positionY]);
+        var moveRight = this.validateMove([this.positionX + 1, this.positionY]);
         if (moveRight)
             moveSet.push(moveRight);
-        var moveRightBottom = checkIfPositionsExists([this.positionX + 1, this.positionY - 1]);
+        var moveRightBottom = this.validateMove([this.positionX + 1, this.positionY - 1]);
         if (moveRightBottom)
             moveSet.push(moveRightBottom);
-        var moveBottom = checkIfPositionsExists([this.positionX, this.positionY - 1]);
+        var moveBottom = this.validateMove([this.positionX, this.positionY - 1]);
         if (moveBottom)
             moveSet.push(moveBottom);
-        var moveBottomLeft = checkIfPositionsExists([this.positionX - 1, this.positionY - 1]);
+        var moveBottomLeft = this.validateMove([this.positionX - 1, this.positionY - 1]);
         if (moveBottomLeft)
             moveSet.push(moveBottomLeft);
         return moveSet;
+    };
+    King.prototype.validateMove = function (move) {
+        if (!checkIfPositionsExists(move))
+            return false;
+        var piece = foundPieceBySquare(move);
+        if (!piece)
+            return move;
+        if (piece.color !== this.color)
+            return move;
+        return false;
     };
     return King;
 }(Piece));
@@ -470,9 +462,9 @@ var parameters = {
         new Pawn([6, 2], "white"),
         new Pawn([7, 2], "white"),
         new Pawn([8, 2], "white"),
-        new Knight([3, 3], "white"),
-        new Knight([6, 3], "black"),
-        new Knight([4, 4], "white")
+        new King([3, 3], "white"),
+        new King([6, 3], "black"),
+        new King([5, 4], "white")
     ]
 };
 //Store DOM references and initial configurations to use on runtime
