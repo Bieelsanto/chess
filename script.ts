@@ -2,6 +2,8 @@
 
 type piece = Pawn | Knight | Bishop | Rook | King | Queen;
 
+var id: number = 1
+
 class Piece {
     positionX: number;
     positionY: number;
@@ -9,6 +11,7 @@ class Piece {
     value: number;
     name: string;
     aparence: string;
+    id: number
 
     constructor(
         position: [number, number],
@@ -23,6 +26,8 @@ class Piece {
         this.name = name;
         this.color = color;
         this.aparence = this.setAparence(aparence);
+        this.id = id
+        id += 1
     }
 
     setAparence(aparence: { "white": string, "black": string }) {
@@ -32,6 +37,7 @@ class Piece {
 
 class Pawn extends Piece {
     neverMoved: true | false = true;
+
     constructor(position: [number, number], color: 'white' | 'black') {
         super(position, color, 1, "Peão", { white: "♟", black: "♙" });
     }
@@ -99,6 +105,8 @@ class Pawn extends Piece {
 }
 
 class Rook extends Piece {
+    neverMoved: true | false = true;
+
     constructor(position: [number, number], color: 'white' | 'black') {
         super(position, color, 5, "Torre", { white: "♜", black: "♖" });
     }
@@ -119,7 +127,7 @@ class Rook extends Piece {
     
         if (!piece) {
             moveSet.push(move);
-            return true
+            return true;
         }
         
         if (piece.color !== this.color) {
@@ -232,7 +240,7 @@ class Bishop extends Piece {
     
         if (!piece) {
             moveSet.push(move);
-            return true
+            return true;
         }
         
         if (piece.color !== this.color) {
@@ -247,7 +255,7 @@ class Bishop extends Piece {
         let x: number = this.positionX - 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break
+            if (!this.validateMove(moveSet, [x, y])) break;
             x -= 1;
             y += 1;
         }
@@ -257,7 +265,7 @@ class Bishop extends Piece {
         let x: number = this.positionX + 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break
+            if (!this.validateMove(moveSet, [x, y])) break;
             x += 1;
             y += 1;
         }
@@ -268,7 +276,7 @@ class Bishop extends Piece {
         let x: number = this.positionX - 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break
+            if (!this.validateMove(moveSet, [x, y])) break;
             x -= 1;
             y -= 1;
         }
@@ -278,7 +286,7 @@ class Bishop extends Piece {
         let x: number = this.positionX + 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break
+            if (!this.validateMove(moveSet, [x, y])) break;
             x += 1;
             y -= 1;
         }
@@ -311,7 +319,7 @@ class Queen extends Piece {
     
         if (!piece) {
             moveSet.push(move);
-            return true
+            return true;
         }
         
         if (piece.color !== this.color) {
@@ -357,7 +365,7 @@ class Queen extends Piece {
     
         if (!piece) {
             moveSet.push(move);
-            return true
+            return true;
         }
         
         if (piece.color !== this.color) {
@@ -372,7 +380,7 @@ class Queen extends Piece {
         let x: number = this.positionX - 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
             x -= 1;
             y += 1;
         }
@@ -382,7 +390,7 @@ class Queen extends Piece {
         let x: number = this.positionX + 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
             x += 1;
             y += 1;
         }
@@ -393,7 +401,7 @@ class Queen extends Piece {
         let x: number = this.positionX - 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
             x -= 1;
             y -= 1;
         }
@@ -403,7 +411,7 @@ class Queen extends Piece {
         let x: number = this.positionX + 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break
+            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
             x += 1;
             y -= 1;
         }
@@ -413,6 +421,8 @@ class Queen extends Piece {
 }
 
 class King extends Piece {
+    neverMoved: true | false = true;
+
     constructor(position: [number, number], color: 'white' | 'black') {
         super(position, color, 0, "Rei", { white: "♚", black: "♔" });
     }
@@ -458,9 +468,9 @@ class King extends Piece {
         if (piece.color !== this.color) return move;
 
         return false;
-    }
+    };
 
-}
+};
 
 //validate if DOM reference points to a valid element
 
@@ -519,11 +529,7 @@ const parameters: {
         new Pawn([5, 2], "white"),
         new Pawn([6, 2], "white"),
         new Pawn([7, 2], "white"),
-        new Pawn([8, 2], "white"),
-        
-        new King([3, 3], "white"),
-        new King([6, 3], "black"),
-        new King([5, 4], "white")
+        new Pawn([8, 2], "white")
     ]
 };
 
@@ -656,12 +662,42 @@ function placeValidMoves(piece: piece): void {
     const moves: [number, number][] = piece.moveSet();
     for (let i = 0 ; i < moves.length ; i++){
         const squareReference = getSquareFromPositions([moves[i][0], moves[i][1]]);
-        if (foundPieceBySquare(squareReference))squareReference.classList.add("square-take");
-        else squareReference.classList.add("square-move");
+        const pieceTarget = foundPieceBySquare(squareReference)
+        if (pieceTarget){
+            squareReference.classList.add("square-take");
+            squareReference.addEventListener("click", function() {
+                handleClickTakeEvent(piece, pieceTarget);
+            });
+        } else {
+            squareReference.classList.add("square-move");
+            squareReference.addEventListener("click", function() {
+                handleClickMoveEvent(piece, squareReference);
+            });
+        } 
+            
     }
 }
 
-//Check if a position is in the board range
+//Process the piece to be taked
+
+function handleClickTakeEvent(piece: piece, pieceTarget: piece): void{
+    switchFlagNeverMovedIfHave(piece)
+    movePiece(piece, [pieceTarget.positionX, pieceTarget.positionY]);
+    takePiece(pieceTarget);
+    switchTurn();
+    popBoard();
+}
+
+//Process the squared to be moved to
+
+function handleClickMoveEvent(piece: piece, squareReference: HTMLElement): void{
+    switchFlagNeverMovedIfHave(piece)
+    movePiece(piece, squareReference);
+    switchTurn();
+    popBoard();
+}
+
+//Check if the position is in the board range
 
 function checkIfPositionsExists(squareReference: [number, number]): false | [number, number]{
     if (squareReference[0] >= 1 && squareReference[0] <= 8){
@@ -670,4 +706,32 @@ function checkIfPositionsExists(squareReference: [number, number]): false | [num
         }
     }
     return false;
+}
+
+//Take the piece
+
+function takePiece(piece: piece){
+    pieces.splice(pieces.findIndex(e => e.id == piece.id), 1);
+}
+
+//Move the piece to the target square
+
+function movePiece(piece: piece, squareReference: HTMLElement | [number, number]){
+    if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
+    piece.positionX = squareReference[0]
+    piece.positionY = squareReference[1]
+}
+
+function switchTurn(): void{
+    if (turn == 'black'){
+        turn = 'white'
+    }else{
+        turn = 'black'
+    }
+}
+
+function switchFlagNeverMovedIfHave(piece: piece){
+    if (piece instanceof Pawn) piece.neverMoved = false;
+    if (piece instanceof King) piece.neverMoved = false;
+    if (piece instanceof Rook) piece.neverMoved = false;
 }

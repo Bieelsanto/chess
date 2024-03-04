@@ -14,6 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var id = 1;
 var Piece = /** @class */ (function () {
     function Piece(position, color, value, name, aparence) {
         this.positionX = position[0];
@@ -22,6 +23,8 @@ var Piece = /** @class */ (function () {
         this.name = name;
         this.color = color;
         this.aparence = this.setAparence(aparence);
+        this.id = id;
+        id += 1;
     }
     Piece.prototype.setAparence = function (aparence) {
         return aparence.black;
@@ -93,7 +96,9 @@ var Pawn = /** @class */ (function (_super) {
 var Rook = /** @class */ (function (_super) {
     __extends(Rook, _super);
     function Rook(position, color) {
-        return _super.call(this, position, color, 5, "Torre", { white: "♜", black: "♖" }) || this;
+        var _this = _super.call(this, position, color, 5, "Torre", { white: "♜", black: "♖" }) || this;
+        _this.neverMoved = true;
+        return _this;
     }
     Rook.prototype.moveSet = function () {
         var moveSet = [];
@@ -372,7 +377,9 @@ var Queen = /** @class */ (function (_super) {
 var King = /** @class */ (function (_super) {
     __extends(King, _super);
     function King(position, color) {
-        return _super.call(this, position, color, 0, "Rei", { white: "♚", black: "♔" }) || this;
+        var _this = _super.call(this, position, color, 0, "Rei", { white: "♚", black: "♔" }) || this;
+        _this.neverMoved = true;
+        return _this;
     }
     King.prototype.moveSet = function () {
         var moveSet = [];
@@ -412,8 +419,10 @@ var King = /** @class */ (function (_super) {
             return move;
         return false;
     };
+    ;
     return King;
 }(Piece));
+;
 //validate if DOM reference points to a valid element
 function validateDOM(DOM, resume) {
     if (DOM !== null) {
@@ -461,10 +470,7 @@ var parameters = {
         new Pawn([5, 2], "white"),
         new Pawn([6, 2], "white"),
         new Pawn([7, 2], "white"),
-        new Pawn([8, 2], "white"),
-        new King([3, 3], "white"),
-        new King([6, 3], "black"),
-        new King([5, 4], "white")
+        new Pawn([8, 2], "white")
     ]
 };
 //Store DOM references and initial configurations to use on runtime
@@ -573,15 +579,42 @@ function handleClickSquareEvent(squareReference) {
 //Place all valid moves of a piece
 function placeValidMoves(piece) {
     var moves = piece.moveSet();
-    for (var i = 0; i < moves.length; i++) {
+    var _loop_1 = function (i) {
         var squareReference = getSquareFromPositions([moves[i][0], moves[i][1]]);
-        if (foundPieceBySquare(squareReference))
+        var pieceTarget = foundPieceBySquare(squareReference);
+        if (pieceTarget) {
             squareReference.classList.add("square-take");
-        else
+            squareReference.addEventListener("click", function () {
+                handleClickTakeEvent(piece, pieceTarget);
+            });
+        }
+        else {
             squareReference.classList.add("square-move");
+            squareReference.addEventListener("click", function () {
+                handleClickMoveEvent(piece, squareReference);
+            });
+        }
+    };
+    for (var i = 0; i < moves.length; i++) {
+        _loop_1(i);
     }
 }
-//Check if a position is in the board range
+//Process the piece to be taked
+function handleClickTakeEvent(piece, pieceTarget) {
+    switchFlagNeverMovedIfHave(piece);
+    movePiece(piece, [pieceTarget.positionX, pieceTarget.positionY]);
+    takePiece(pieceTarget);
+    switchTurn();
+    popBoard();
+}
+//Process the squared to be moved to
+function handleClickMoveEvent(piece, squareReference) {
+    switchFlagNeverMovedIfHave(piece);
+    movePiece(piece, squareReference);
+    switchTurn();
+    popBoard();
+}
+//Check if the position is in the board range
 function checkIfPositionsExists(squareReference) {
     if (squareReference[0] >= 1 && squareReference[0] <= 8) {
         if (squareReference[1] >= 1 && squareReference[1] <= 8) {
@@ -589,4 +622,31 @@ function checkIfPositionsExists(squareReference) {
         }
     }
     return false;
+}
+//Take the piece
+function takePiece(piece) {
+    pieces.splice(pieces.findIndex(function (e) { return e.id == piece.id; }), 1);
+}
+//Move the piece to the target square
+function movePiece(piece, squareReference) {
+    if (squareReference instanceof (HTMLElement))
+        squareReference = getPositionsFromSquare(squareReference);
+    piece.positionX = squareReference[0];
+    piece.positionY = squareReference[1];
+}
+function switchTurn() {
+    if (turn == 'black') {
+        turn = 'white';
+    }
+    else {
+        turn = 'black';
+    }
+}
+function switchFlagNeverMovedIfHave(piece) {
+    if (piece instanceof Pawn)
+        piece.neverMoved = false;
+    if (piece instanceof King)
+        piece.neverMoved = false;
+    if (piece instanceof Rook)
+        piece.neverMoved = false;
 }
