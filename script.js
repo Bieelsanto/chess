@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var id = 1;
+var pieceId = 1;
 var Piece = /** @class */ (function () {
     function Piece(position, color, value, name, aparence) {
         this.positionX = position[0];
@@ -23,8 +23,8 @@ var Piece = /** @class */ (function () {
         this.name = name;
         this.color = color;
         this.aparence = this.setAparence(aparence);
-        this.id = id;
-        id += 1;
+        this.pieceId = pieceId;
+        pieceId += 1;
     }
     Piece.prototype.setAparence = function (aparence) {
         return aparence.black;
@@ -625,7 +625,7 @@ function checkIfPositionsExists(squareReference) {
 }
 //Take the piece
 function takePiece(piece) {
-    pieces.splice(pieces.findIndex(function (e) { return e.id == piece.id; }), 1);
+    pieces.splice(pieces.findIndex(function (e) { return e.pieceId == piece.pieceId; }), 1);
 }
 //Move the piece to the target square
 function movePiece(piece, squareReference) {

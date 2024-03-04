@@ -2,7 +2,7 @@
 
 type piece = Pawn | Knight | Bishop | Rook | King | Queen;
 
-var id: number = 1
+var pieceId: number = 1
 
 class Piece {
     positionX: number;
@@ -11,7 +11,7 @@ class Piece {
     value: number;
     name: string;
     aparence: string;
-    id: number
+    pieceId: number
 
     constructor(
         position: [number, number],
@@ -26,8 +26,8 @@ class Piece {
         this.name = name;
         this.color = color;
         this.aparence = this.setAparence(aparence);
-        this.id = id
-        id += 1
+        this.pieceId = pieceId
+        pieceId += 1
     }
 
     setAparence(aparence: { "white": string, "black": string }) {
@@ -550,7 +550,7 @@ function main(): void {
 
 //Initialize settings to start 
 
-function initialize() {
+function initialize(): void{
     setSizeBoard(parameters.board.size);
     popBoard();
     window.onresize = popBoard;
@@ -602,7 +602,7 @@ function popBoard(): void {
 
 //Place piece in the square reference
 
-function placePiece(piece: piece, squareReference: HTMLElement) {
+function placePiece(piece: piece, squareReference: HTMLElement): void {
     squareReference.innerHTML = piece.aparence;
     if (piece.color == 'black'){
         squareReference.style.color = '#000';
@@ -646,7 +646,7 @@ function getPositionsFromSquare(squareReference: HTMLElement): [number, number] 
 
 //Process the clicked square
 
-function handleClickSquareEvent(squareReference: HTMLElement){
+function handleClickSquareEvent(squareReference: HTMLElement): void{
     popBoard();
     console.log(`Clicou em ${getPositionsFromSquare(squareReference)}`);
     const piece: piece | false = foundPieceBySquare(squareReference);
@@ -711,12 +711,12 @@ function checkIfPositionsExists(squareReference: [number, number]): false | [num
 //Take the piece
 
 function takePiece(piece: piece){
-    pieces.splice(pieces.findIndex(e => e.id == piece.id), 1);
+    pieces.splice(pieces.findIndex(e => e.pieceId == piece.pieceId), 1);
 }
 
 //Move the piece to the target square
 
-function movePiece(piece: piece, squareReference: HTMLElement | [number, number]){
+function movePiece(piece: piece, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
     piece.positionX = squareReference[0]
     piece.positionY = squareReference[1]
@@ -730,7 +730,7 @@ function switchTurn(): void{
     }
 }
 
-function switchFlagNeverMovedIfHave(piece: piece){
+function switchFlagNeverMovedIfHave(piece: piece): void{
     if (piece instanceof Pawn) piece.neverMoved = false;
     if (piece instanceof King) piece.neverMoved = false;
     if (piece instanceof Rook) piece.neverMoved = false;
