@@ -60,11 +60,11 @@ class Pawn extends Piece {
         //Move set to take moves
         move = [this.positionX-1, this.positionY-1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn) moveSet.push(move);
+        if (piece && piece.color != this.color) moveSet.push(move);
         
         move = [this.positionX+1, this.positionY-1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn) moveSet.push(move);
+        if (piece && piece.color != this.color) moveSet.push(move);
 
         return moveSet;
     }
@@ -87,11 +87,11 @@ class Pawn extends Piece {
         //Move set to take moves
         move = [this.positionX-1, this.positionY+1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn) moveSet.push(move);
+        if (piece && piece.color != this.color) moveSet.push(move);
         
         move = [this.positionX+1, this.positionY+1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn) moveSet.push(move);
+        if (piece && piece.color != this.color) moveSet.push(move);
 
         return moveSet;
     }
@@ -118,7 +118,7 @@ class Rook extends Piece {
             move = [this.positionX, i];
             piece = foundPieceBySquare(move);
             if (piece){
-                if (piece.color != turn){
+                if (piece.color != this.color){
                     moveSet.push(move);
                 }
                 break;
@@ -130,7 +130,7 @@ class Rook extends Piece {
             move = [this.positionX, i];
             piece = foundPieceBySquare(move);
             if (piece){
-                if (piece.color != turn){
+                if (piece.color != this.color){
                     moveSet.push(move);
                 }
                 break;
@@ -149,7 +149,7 @@ class Rook extends Piece {
             move = [i, this.positionY];
             piece = foundPieceBySquare(move);
             if (piece){
-                if (piece.color != turn){
+                if (piece.color != this.color){
                     moveSet.push(move);
                 }
                 break;
@@ -161,7 +161,7 @@ class Rook extends Piece {
             move = [i, this.positionY];
             piece = foundPieceBySquare(move);
             if (piece){
-                if (piece.color != turn){
+                if (piece.color != this.color){
                     moveSet.push(move);
                 }
                 break;
@@ -183,36 +183,52 @@ class Knight extends Piece {
         let move: [number, number] | false;
         let piece: piece | false;
 
-        move = [this.positionX-2, this.positionY+1];
-        if (checkIfPositionsExists(move)){
-            piece = foundPieceBySquare(move)
-            if (piece)
-            moveSet.push(move);
-        } 
-
-        move = checkIfPositionsExists([this.positionX-2, this.positionY-1]);
+        move = this.validateMove([this.positionX-2, this.positionY+1]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX+1, this.positionY+2]);
+        move = this.validateMove([this.positionX-2, this.positionY-1]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX-1, this.positionY+2]);
+        move = this.validateMove([this.positionX+1, this.positionY+2]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX+2, this.positionY+1]);
+        move = this.validateMove([this.positionX-1, this.positionY+2]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX+2, this.positionY-1]);
+        move = this.validateMove([this.positionX+2, this.positionY+1]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX+1, this.positionY-2]);
+        move = this.validateMove([this.positionX+2, this.positionY-1]);
         if (move) moveSet.push(move);
 
-        move = checkIfPositionsExists([this.positionX-1, this.positionY-2]);
+        move = this.validateMove([this.positionX+1, this.positionY-2]);
+        if (move) moveSet.push(move);
+
+        move = this.validateMove([this.positionX-1, this.positionY-2]);
         if (move) moveSet.push(move);
 
         return moveSet;
     }
+
+    validateMove(move: [number, number]): [number, number] | false {
+
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+
+        const piece: Piece | false = foundPieceBySquare(move);
+    
+        if (!piece) {
+            return move;
+        }
+        
+        if (piece.color !== this.color) {
+            return move;
+        }
+
+        return false;
+    }
+    
 
 }
 
@@ -491,7 +507,7 @@ const parameters: {
         new Pawn([8, 2], "white"),
         
         new Knight([3, 3], "white"),
-        new Knight([5, 3], "black"),
+        new Knight([6, 3], "black"),
         new Knight([4, 4], "white")
     ]
 };
@@ -594,7 +610,7 @@ function foundPieceBySquare(squareReference: [number, number] | HTMLElement): pi
 
 function getSquareFromPositions(position: [number, number]): HTMLElement {
     const id: string = `${position[0]}-${position[1]}`;
-    const square: HTMLElement = document.getElementById(id);
+    const square: HTMLElement | null = document.getElementById(id);
     return validateDOM(square, `casa [${id}] não encontrada`);
 }
 

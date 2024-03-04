@@ -57,11 +57,11 @@ var Pawn = /** @class */ (function (_super) {
         //Move set to take moves
         move = [this.positionX - 1, this.positionY - 1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn)
+        if (piece && piece.color != this.color)
             moveSet.push(move);
         move = [this.positionX + 1, this.positionY - 1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn)
+        if (piece && piece.color != this.color)
             moveSet.push(move);
         return moveSet;
     };
@@ -80,11 +80,11 @@ var Pawn = /** @class */ (function (_super) {
         //Move set to take moves
         move = [this.positionX - 1, this.positionY + 1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn)
+        if (piece && piece.color != this.color)
             moveSet.push(move);
         move = [this.positionX + 1, this.positionY + 1];
         piece = foundPieceBySquare(move);
-        if (piece && piece.color != turn)
+        if (piece && piece.color != this.color)
             moveSet.push(move);
         return moveSet;
     };
@@ -108,7 +108,7 @@ var Rook = /** @class */ (function (_super) {
             move = [this.positionX, i];
             piece = foundPieceBySquare(move);
             if (piece) {
-                if (piece.color != turn) {
+                if (piece.color != this.color) {
                     moveSet.push(move);
                 }
                 break;
@@ -119,7 +119,7 @@ var Rook = /** @class */ (function (_super) {
             move = [this.positionX, i];
             piece = foundPieceBySquare(move);
             if (piece) {
-                if (piece.color != turn) {
+                if (piece.color != this.color) {
                     moveSet.push(move);
                 }
                 break;
@@ -135,7 +135,7 @@ var Rook = /** @class */ (function (_super) {
             move = [i, this.positionY];
             piece = foundPieceBySquare(move);
             if (piece) {
-                if (piece.color != turn) {
+                if (piece.color != this.color) {
                     moveSet.push(move);
                 }
                 break;
@@ -146,7 +146,7 @@ var Rook = /** @class */ (function (_super) {
             move = [i, this.positionY];
             piece = foundPieceBySquare(move);
             if (piece) {
-                if (piece.color != turn) {
+                if (piece.color != this.color) {
                     moveSet.push(move);
                 }
                 break;
@@ -164,31 +164,46 @@ var Knight = /** @class */ (function (_super) {
     }
     Knight.prototype.moveSet = function () {
         var moveSet = [];
-        var moveLeftTop = checkIfPositionsExists([this.positionX - 2, this.positionY + 1]);
-        if (moveLeftTop)
-            moveSet.push(moveLeftTop);
-        var moveLeftBottom = checkIfPositionsExists([this.positionX - 2, this.positionY - 1]);
-        if (moveLeftBottom)
-            moveSet.push(moveLeftBottom);
-        var moveTopLeft = checkIfPositionsExists([this.positionX + 1, this.positionY + 2]);
-        if (moveTopLeft)
-            moveSet.push(moveTopLeft);
-        var moveTopRight = checkIfPositionsExists([this.positionX - 1, this.positionY + 2]);
-        if (moveTopRight)
-            moveSet.push(moveTopRight);
-        var moveRightTop = checkIfPositionsExists([this.positionX + 2, this.positionY + 1]);
-        if (moveRightTop)
-            moveSet.push(moveRightTop);
-        var moveRightBottom = checkIfPositionsExists([this.positionX + 2, this.positionY - 1]);
-        if (moveRightBottom)
-            moveSet.push(moveRightBottom);
-        var moveBottomRight = checkIfPositionsExists([this.positionX + 1, this.positionY - 2]);
-        if (moveBottomRight)
-            moveSet.push(moveBottomRight);
-        var moveBottomLeft = checkIfPositionsExists([this.positionX - 1, this.positionY - 2]);
-        if (moveBottomLeft)
-            moveSet.push(moveBottomLeft);
+        var move;
+        var piece;
+        move = this.validateMove([this.positionX - 2, this.positionY + 1]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX - 2, this.positionY - 1]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX + 1, this.positionY + 2]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX - 1, this.positionY + 2]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX + 2, this.positionY + 1]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX + 2, this.positionY - 1]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX + 1, this.positionY - 2]);
+        if (move)
+            moveSet.push(move);
+        move = this.validateMove([this.positionX - 1, this.positionY - 2]);
+        if (move)
+            moveSet.push(move);
         return moveSet;
+    };
+    Knight.prototype.validateMove = function (move) {
+        if (!checkIfPositionsExists(move)) {
+            return false;
+        }
+        var piece = foundPieceBySquare(move);
+        if (!piece) {
+            return move;
+        }
+        if (piece.color !== this.color) {
+            return move;
+        }
+        return false;
     };
     return Knight;
 }(Piece));
@@ -456,7 +471,7 @@ var parameters = {
         new Pawn([7, 2], "white"),
         new Pawn([8, 2], "white"),
         new Knight([3, 3], "white"),
-        new Knight([5, 3], "black"),
+        new Knight([6, 3], "black"),
         new Knight([4, 4], "white")
     ]
 };

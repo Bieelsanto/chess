@@ -8,6 +8,6 @@
       "forceConsistentCasingInFileNames": true
     },
     "files": [
-      "chess/script.ts",
+      "script.ts",
     ]
   }
