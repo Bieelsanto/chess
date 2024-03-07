@@ -1,8 +1,9 @@
 //Create the Piece classes
 
 type piece = Pawn | Knight | Bishop | Rook | King | Queen;
+type specialMove = 'enPassant' | 'longCastle' | 'shortCastle' | 'twoSquares'
 
-var pieceId: number = 1
+var pieceId: number = 0;
 
 class Piece {
     positionX: number;
@@ -11,7 +12,7 @@ class Piece {
     value: number;
     name: string;
     aparence: string;
-    pieceId: number
+    pieceId: number;
 
     constructor(
         position: [number, number],
@@ -26,12 +27,16 @@ class Piece {
         this.name = name;
         this.color = color;
         this.aparence = this.setAparence(aparence);
-        this.pieceId = pieceId
-        pieceId += 1
+        this.SetAndincrementId()
     }
 
     setAparence(aparence: { "white": string, "black": string }) {
         return aparence.black;
+    }
+
+    SetAndincrementId(){
+        pieceId += 1
+        this.pieceId = pieceId
     }
 }
 
@@ -42,64 +47,73 @@ class Pawn extends Piece {
         super(position, color, 1, "Peão", { white: "♟", black: "♙" });
     }
 
+    takeSet(): [number, number][] {
+        const takeSet: [number, number][] = [];
+        let move: [number, number] | false;
+        //Move set to take moves
+
+        const relativeY: number = (this.color == 'black') ? this.positionY-1 : this.positionY + 1
+
+        //Take to left
+        move = verifyIfPositionsExists([this.positionX - 1, relativeY]);
+        if (move) takeSet.push(move);
+        
+        //Take to right
+        move = verifyIfPositionsExists([this.positionX + 1, relativeY]);
+        if (move) takeSet.push(move);
+
+        return takeSet;
+    }
+
     moveSet(): [number, number][] {
         const moveSet: [number, number][] = [];
-        if (this.color == 'white') return this.moveSetWhite(moveSet);
-        else return this.moveSetBlack(moveSet);
+        this.moveSetFront(moveSet);
+        return moveSet;
     }
 
-    moveSetBlack(moveSet: [number, number][]): [number, number][] {
+    specialMoveSet(): specialMove[]{
+        const specialMoveSet: specialMove[] = []
+        let move: [number, number];
+
+        //specialMoveSet to enPassant
+        this.moveSetEnPassant(specialMoveSet)
+
+        //Move set to the second square move
+        const relativeY: number = (this.color == 'black') ? this.positionY - 2 : this.positionY + 2
+
+        move = [this.positionX, relativeY];
+        if (this.neverMoved && !foundPieceBySquare(move)) specialMoveSet.push("twoSquares");
+
+        return specialMoveSet
+    }
+
+    moveSetEnPassant(specialMoveSet: specialMove[]):void {
+        if (!currentEnPassant) return
+        if (currentEnPassant.color == this.color) return
+        if (currentEnPassant.positionY != this.positionY) return
+        if (currentEnPassant.positionX == this.positionX - 1) specialMoveSet.push("enPassant")
+        if (currentEnPassant.positionX == this.positionX + 1) specialMoveSet.push("enPassant")
+    }
+
+    moveSetFront(moveSet: [number, number][]): void{
         let move: [number, number];
         let piece: piece | false;
+        const relativeY: number = (this.color == 'black') ? this.positionY - 1 : this.positionY + 1
 
         //Move set to one square move
-        move = [this.positionX, this.positionY-1]
-        if (!foundPieceBySquare(move)){
+        move = [this.positionX, relativeY]
+        if (!foundPieceBySquare(move) && verifyIfPositionsExists(move)){
             moveSet.push(move);
-
-            //Move set to the second square move
-            move = [this.positionX, this.positionY-2];
-            if (this.neverMoved && !foundPieceBySquare(move)) moveSet.push(move);
-
         } 
         
         //Move set to take moves
-        move = [this.positionX-1, this.positionY-1];
+        move = [this.positionX-1, relativeY];
         piece = foundPieceBySquare(move);
         if (piece && piece.color != this.color) moveSet.push(move);
         
-        move = [this.positionX+1, this.positionY-1];
+        move = [this.positionX+1, relativeY];
         piece = foundPieceBySquare(move);
         if (piece && piece.color != this.color) moveSet.push(move);
-
-        return moveSet;
-    }
-    
-    moveSetWhite(moveSet: [number, number][]): [number, number][] {
-        let move: [number, number];
-        let piece: piece | false;
-
-        //Move set to one square move
-        move = [this.positionX, this.positionY+1]
-        if (!foundPieceBySquare(move)){
-            moveSet.push(move);
-            
-            //Move set to the second square move
-            move = [this.positionX, this.positionY+2]
-            if (this.neverMoved && !foundPieceBySquare(move)) moveSet.push(move);
-        } 
-
-
-        //Move set to take moves
-        move = [this.positionX-1, this.positionY+1];
-        piece = foundPieceBySquare(move);
-        if (piece && piece.color != this.color) moveSet.push(move);
-        
-        move = [this.positionX+1, this.positionY+1];
-        piece = foundPieceBySquare(move);
-        if (piece && piece.color != this.color) moveSet.push(move);
-
-        return moveSet;
     }
 
 }
@@ -111,15 +125,20 @@ class Rook extends Piece {
         super(position, color, 5, "Torre", { white: "♜", black: "♖" });
     }
 
-    moveSet(): [number, number][] {
-        var moveSet: [number, number][] = [];
-        this.moveSetTopBottom(moveSet);
-        this.moveSetRightLeft(moveSet);
+    takeSet(): [number, number][] {
+        return this.moveSet('take');
+    }
+
+    moveSet(take?: 'take'): [number, number][] {
+        const moveSet: [number, number][] = [];
+        this.moveSetTopBottom(moveSet, take);
+        this.moveSetRightLeft(moveSet, take);
         return moveSet;
     }
 
-    validateMove(moveSet: [number, number][], move: [number, number]): boolean {
-        if (!checkIfPositionsExists(move)) {
+    validateMove(moveSet: [number, number][], move: [number, number], take?:'take'): boolean {
+
+        if (!verifyIfPositionsExists(move)) {
             return false;
         }
 
@@ -130,7 +149,7 @@ class Rook extends Piece {
             return true;
         }
         
-        if (piece.color !== this.color) {
+        if (piece.color !== this.color || take) {
             moveSet.push(move);
             return false;
         }
@@ -138,29 +157,29 @@ class Rook extends Piece {
         return false;
     }
 
-    moveSetTopBottom(moveSet: [number, number][]): void {
+    moveSetTopBottom(moveSet: [number, number][], take?: 'take'): void {
         let move: [number, number];
         let piece: piece | false;
 
         for (let i = this.positionY + 1 ; i <= 8 ; i++){
-            if (!this.validateMove(moveSet, [this.positionX, i])) break;
+            if (!this.validateMove(moveSet, [this.positionX, i], take)) break;
         }
 
         for (let i = this.positionY-1 ; i >= 1 ; i--){
-            if (!this.validateMove(moveSet, [this.positionX, i])) break;
+            if (!this.validateMove(moveSet, [this.positionX, i], take)) break;
         }
     }
     
-    moveSetRightLeft(moveSet: [number, number][]): void {
+    moveSetRightLeft(moveSet: [number, number][], take?: 'take'): void {
         let move: [number, number];
         let piece: piece | false;
 
         for (let i = this.positionX + 1 ; i <= 8 ; i++){
-            if (!this.validateMove(moveSet, [i, this.positionY])) break;
+            if (!this.validateMove(moveSet, [i, this.positionY], take)) break;
         }
 
         for (let i = this.positionX - 1 ; i >= 1 ; i--){
-            if (!this.validateMove(moveSet, [i, this.positionY])) break;
+            if (!this.validateMove(moveSet, [i, this.positionY], take)) break;
         }
     }
 
@@ -171,46 +190,50 @@ class Knight extends Piece {
         super(position, color, 3, "Cavalo", { white: "♞", black: "♘" });
     }
 
-    moveSet(): [number, number][] {
+    takeSet(): [number, number][] {
+        return this.moveSet('take');
+    }
+
+    moveSet(take?: 'take'): [number, number][] {
         var moveSet: [number, number][] = [];
         let move: [number, number] | false;
 
-        move = this.validateMove([this.positionX-2, this.positionY+1]);
+        move = this.validateMove([this.positionX-2, this.positionY+1], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX-2, this.positionY-1]);
+        move = this.validateMove([this.positionX-2, this.positionY-1], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX+1, this.positionY+2]);
+        move = this.validateMove([this.positionX+1, this.positionY+2], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX-1, this.positionY+2]);
+        move = this.validateMove([this.positionX-1, this.positionY+2], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX+2, this.positionY+1]);
+        move = this.validateMove([this.positionX+2, this.positionY+1], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX+2, this.positionY-1]);
+        move = this.validateMove([this.positionX+2, this.positionY-1], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX+1, this.positionY-2]);
+        move = this.validateMove([this.positionX+1, this.positionY-2], take);
         if (move) moveSet.push(move);
 
-        move = this.validateMove([this.positionX-1, this.positionY-2]);
+        move = this.validateMove([this.positionX-1, this.positionY-2], take);
         if (move) moveSet.push(move);
 
         return moveSet;
     }
 
-    validateMove(move: [number, number]): [number, number] | false {
+    validateMove(move: [number, number], take?:'take'): [number, number] | false {
 
-        if (!checkIfPositionsExists(move)) return false;
+        if (!verifyIfPositionsExists(move)) return false;
 
         const piece: Piece | false = foundPieceBySquare(move);
     
         if (!piece) return move;
         
-        if (piece.color !== this.color) return move;
+        if (piece.color !== this.color || take) return move;
 
         return false;
     }
@@ -222,17 +245,21 @@ class Bishop extends Piece {
         super(position, color, 3, "Bispo", { white: "♝", black: "♗" });
     }
 
-    moveSet(): [number, number][] {
+    takeSet(): [number, number][] {
+        return this.moveSet('take');
+    }
+
+    moveSet(take?: 'take'): [number, number][] {
         const moveSet: [number, number][] = [];
-        this.moveSetTopLeft(moveSet);
-        this.moveSetTopRight(moveSet);
-        this.moveSetBottomLeft(moveSet);
-        this.moveSetBottomRight(moveSet);
+        this.moveSetTopLeft(moveSet, take);
+        this.moveSetTopRight(moveSet, take);
+        this.moveSetBottomLeft(moveSet, take);
+        this.moveSetBottomRight(moveSet), take;
         return moveSet;
     }
 
-    validateMove(moveSet: [number, number][], move: [number, number]): boolean {
-        if (!checkIfPositionsExists(move)) {
+    validateMove(moveSet: [number, number][], move: [number, number], take?:'take'): boolean {
+        if (!verifyIfPositionsExists(move)) {
             return false;
         }
 
@@ -243,7 +270,7 @@ class Bishop extends Piece {
             return true;
         }
         
-        if (piece.color !== this.color) {
+        if (piece.color !== this.color || take) {
             moveSet.push(move);
             return false;
         }
@@ -251,42 +278,42 @@ class Bishop extends Piece {
         return false;
     }
 
-    moveSetTopLeft(moveSet: [number, number][]): void {
+    moveSetTopLeft(moveSet: [number, number][], take?:'take'): void {
         let x: number = this.positionX - 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break;
+            if (!this.validateMove(moveSet, [x, y], take)) break;
             x -= 1;
             y += 1;
         }
     }
     
-    moveSetTopRight(moveSet: [number, number][]): void {
+    moveSetTopRight(moveSet: [number, number][], take?:'take'): void {
         let x: number = this.positionX + 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break;
+            if (!this.validateMove(moveSet, [x, y], take)) break;
             x += 1;
             y += 1;
         }
 
     }
 
-    moveSetBottomLeft(moveSet: [number, number][]): void {
+    moveSetBottomLeft(moveSet: [number, number][], take?:'take'): void {
         let x: number = this.positionX - 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break;
+            if (!this.validateMove(moveSet, [x, y], take)) break;
             x -= 1;
             y -= 1;
         }
     }
 
-    moveSetBottomRight(moveSet: [number, number][]): void {
+    moveSetBottomRight(moveSet: [number, number][], take?:'take'): void {
         let x: number = this.positionX + 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMove(moveSet, [x, y])) break;
+            if (!this.validateMove(moveSet, [x, y], take)) break;
             x += 1;
             y -= 1;
         }
@@ -299,19 +326,23 @@ class Queen extends Piece {
         super(position, color, 9, "Rainha", { white: "♛", black: "♕" });
     }
 
-    moveSet(): [number, number][] {
+    takeSet(): [number, number][] {
+        return this.moveSet('take');
+    }
+
+    moveSet(take?: 'take'): [number, number][] {
         var moveSet: [number, number][] = [];
-        this.moveSetTopLeft(moveSet);
-        this.moveSetTopRight(moveSet);
-        this.moveSetBottomLeft(moveSet);
-        this.moveSetBottomRight(moveSet);
-        this.moveSetTopBottom(moveSet);
-        this.moveSetRightLeft(moveSet);
+        this.moveSetTopLeft(moveSet, take);
+        this.moveSetTopRight(moveSet, take);
+        this.moveSetBottomLeft(moveSet, take);
+        this.moveSetBottomRight(moveSet, take);
+        this.moveSetTopBottom(moveSet, take);
+        this.moveSetRightLeft(moveSet, take);
         return moveSet;
     }
 
-    validateMovestraight(moveSet: [number, number][], move: [number, number]): boolean {
-        if (!checkIfPositionsExists(move)) {
+    validateMovestraight(moveSet: [number, number][], move: [number, number], take?: 'take'): boolean {
+        if (!verifyIfPositionsExists(move)) {
             return false;
         }
 
@@ -322,7 +353,7 @@ class Queen extends Piece {
             return true;
         }
         
-        if (piece.color !== this.color) {
+        if (piece.color !== this.color || take) {
             moveSet.push(move);
             return false;
         }
@@ -330,34 +361,30 @@ class Queen extends Piece {
         return false;
     }
 
-    moveSetTopBottom(moveSet: [number, number][]): void {
-        let move: [number, number];
-        let piece: piece | false;
+    moveSetTopBottom(moveSet: [number, number][], take?: 'take'): void {
 
         for (let i = this.positionY + 1 ; i <= 8 ; i++){
-            if (!this.validateMovestraight(moveSet, [this.positionX, i])) break;
+            if (!this.validateMovestraight(moveSet, [this.positionX, i], take)) break;
         }
 
         for (let i = this.positionY-1 ; i >= 1 ; i--){
-            if (!this.validateMovestraight(moveSet, [this.positionX, i])) break;
+            if (!this.validateMovestraight(moveSet, [this.positionX, i], take)) break;
         }
     }
     
-    moveSetRightLeft(moveSet: [number, number][]): void {
-        let move: [number, number];
-        let piece: piece | false;
+    moveSetRightLeft(moveSet: [number, number][], take?: 'take'): void {
 
         for (let i = this.positionX + 1 ; i <= 8 ; i++){
-            if (!this.validateMovestraight(moveSet, [i, this.positionY])) break;
+            if (!this.validateMovestraight(moveSet, [i, this.positionY], take)) break;
         }
 
         for (let i = this.positionX - 1 ; i >= 1 ; i--){
-            if (!this.validateMovestraight(moveSet, [i, this.positionY])) break;
+            if (!this.validateMovestraight(moveSet, [i, this.positionY], take)) break;
         }
     }
 
-    validateMoveDiagonal(moveSet: [number, number][], move: [number, number]): boolean {
-        if (!checkIfPositionsExists(move)) {
+    validateMoveDiagonal(moveSet: [number, number][], move: [number, number], take?: 'take'): boolean {
+        if (!verifyIfPositionsExists(move)) {
             return false;
         }
 
@@ -368,56 +395,52 @@ class Queen extends Piece {
             return true;
         }
         
-        if (piece.color !== this.color) {
+        if (piece.color !== this.color || take) {
             moveSet.push(move);
             return false;
         }
-
         return false;
     }
 
-    moveSetTopLeft(moveSet: [number, number][]): void {
+    moveSetTopLeft(moveSet: [number, number][], take?: 'take'): void {
         let x: number = this.positionX - 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
+            if (!this.validateMoveDiagonal(moveSet, [x, y], take)) break;
             x -= 1;
             y += 1;
         }
     }
     
-    moveSetTopRight(moveSet: [number, number][]): void {
+    moveSetTopRight(moveSet: [number, number][], take?: 'take'): void {
         let x: number = this.positionX + 1;
         let y: number = this.positionY + 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
+            if (!this.validateMoveDiagonal(moveSet, [x, y], take)) break;
             x += 1;
             y += 1;
         }
-
     }
 
-    moveSetBottomLeft(moveSet: [number, number][]): void {
+    moveSetBottomLeft(moveSet: [number, number][], take?: 'take'): void {
         let x: number = this.positionX - 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
+            if (!this.validateMoveDiagonal(moveSet, [x, y], take)) break;
             x -= 1;
             y -= 1;
         }
     }
 
-    moveSetBottomRight(moveSet: [number, number][]): void {
+    moveSetBottomRight(moveSet: [number, number][], take?: 'take'): void {
         let x: number = this.positionX + 1;
         let y: number = this.positionY - 1;
         while(true){
-            if (!this.validateMoveDiagonal(moveSet, [x, y])) break;
+            if (!this.validateMoveDiagonal(moveSet, [x, y], take)) break;
             x += 1;
             y -= 1;
         }
     }
-
-
 }
 
 class King extends Piece {
@@ -427,47 +450,95 @@ class King extends Piece {
         super(position, color, 0, "Rei", { white: "♚", black: "♔" });
     }
 
-    moveSet(): [number, number][] {
-        var moveSet: [number, number][] = [];
+    takeSet(): [number, number][] {
+        return this.moveSet('take')
+    }
 
-        const moveleft = this.validateMove([this.positionX-1, this.positionY]);
+    moveSet(take?:'take'): [number, number][] {
+        const moveSet: [number, number][] = [];
+
+        const moveleft = this.validateMove([this.positionX-1, this.positionY], take);
         if (moveleft) moveSet.push(moveleft);
 
-        const moveleftTop = this.validateMove([this.positionX-1, this.positionY+1]);
+        const moveleftTop = this.validateMove([this.positionX-1, this.positionY+1], take);
         if (moveleftTop) moveSet.push(moveleftTop);
 
-        const movetop = this.validateMove([this.positionX, this.positionY+1]);
+        const movetop = this.validateMove([this.positionX, this.positionY+1], take);
         if (movetop) moveSet.push(movetop);
 
-        const moveTopRight = this.validateMove([this.positionX+1, this.positionY+1]);
+        const moveTopRight = this.validateMove([this.positionX+1, this.positionY+1], take);
         if (moveTopRight) moveSet.push(moveTopRight);
 
-        const moveRight = this.validateMove([this.positionX+1, this.positionY]);
+        const moveRight = this.validateMove([this.positionX+1, this.positionY], take);
         if (moveRight) moveSet.push(moveRight);
 
-        const moveRightBottom = this.validateMove([this.positionX+1, this.positionY-1]);
+        const moveRightBottom = this.validateMove([this.positionX+1, this.positionY-1], take);
         if (moveRightBottom) moveSet.push(moveRightBottom);
 
-        const moveBottom = this.validateMove([this.positionX, this.positionY-1]);
+        const moveBottom = this.validateMove([this.positionX, this.positionY-1], take);
         if (moveBottom) moveSet.push(moveBottom);
 
-        const moveBottomLeft = this.validateMove([this.positionX-1, this.positionY-1]);
+        const moveBottomLeft = this.validateMove([this.positionX-1, this.positionY-1], take);
         if (moveBottomLeft) moveSet.push(moveBottomLeft);
 
         return moveSet;
     }
 
-    validateMove(move: [number, number]): [number, number] | false {
+    specialMoveSet(): specialMove[]{
+        const specialMoveSet: specialMove[] = [];
 
-        if (!checkIfPositionsExists(move)) return false;
+        //Move set to the long castle
+        this.moveSetShortCastle(specialMoveSet);
 
-        const piece: Piece | false = foundPieceBySquare(move);
-    
-        if (!piece) return move;
+        //Move set to the short castle
+        this.moveSetLongCastle(specialMoveSet);
         
-        if (piece.color !== this.color) return move;
+        return specialMoveSet;
+    }
 
-        return false;
+    moveSetShortCastle(specialMoveSet: specialMove[]): void{
+        const rook = foundPieceBySquare([8, this.positionY])
+        if (!rook) return //if theres no piece on initial rook square, return
+        if (!(rook instanceof Rook)) return //if the piece on the rook square isnt a rook, return
+        if (!(this.neverMoved)) return //if the king already moved, return
+        if (!(rook.neverMoved)) return //if the rook already moved, return
+        if ((verifyIfSquareUnderAttack([this.positionX, this.positionY]))) return // if under attack, return
+        if ((foundPieceBySquare([7, this.positionY]))) return //if theres a piece on the way, return
+        if ((verifyIfSquareUnderAttack([7, this.positionY]))) return // if way under attack, return
+        if ((foundPieceBySquare([6, this.positionY]))) return //if theres a piece on the way, return
+        if ((verifyIfSquareUnderAttack([6, this.positionY]))) return // if way under attack, return
+        specialMoveSet.push('shortCastle') //Return shortCastle to caller
+        return 
+    }
+    
+    moveSetLongCastle(specialMoveSet: specialMove[]): void{
+        const rook = foundPieceBySquare([1, this.positionY])
+        if (!rook) return //if theres no piece on initial rook square, return
+        if (!(rook instanceof Rook)) return //if the piece on the rook square isnt a rook, return
+        if (!(this.neverMoved)) return //if the king already moved, return
+        if (!(rook.neverMoved)) return //if the rook already moved, return
+        if ((verifyIfSquareUnderAttack([this.positionX, this.positionY]))) return // if under attack, return
+        if ((foundPieceBySquare([3, this.positionY]))) return //if theres a piece on the way, return
+        if ((verifyIfSquareUnderAttack([3, this.positionY]))) return // if way under attack, return
+        if ((foundPieceBySquare([4, this.positionY]))) return //if theres a piece on the way, return
+        if ((verifyIfSquareUnderAttack([4, this.positionY]))) return // if way under attack, return
+        specialMoveSet.push('longCastle') //Return longCastle to caller
+        return 
+    }
+
+    validateMove(move: [number, number], take?:'take'): [number, number] | false {
+        
+        if (!verifyIfPositionsExists(move)) return false; //If the square doesnt exists, return false
+
+        if (take) return move; //If its a takeSet, return move
+
+        const piece: Piece | false = foundPieceBySquare(move); //Get the piece from the square
+    
+        if (!piece) return move; //return move if theres none piece on the square 
+        
+        if (piece.color !== this.color) return move; //return move if its the opponent piece
+
+        return false; //return false else (its a friendly piece)
     };
 
 };
@@ -537,6 +608,7 @@ const parameters: {
 
 var turn: "black" | "white" = 'white';
 var selectedPiece: piece;
+var currentEnPassant: piece;
 const pieces: piece[] = parameters.initialPosition;
 const board: HTMLElement = validateDOM(document.getElementById(parameters.board.value), parameters.board.description);
 
@@ -569,10 +641,23 @@ function popBoard(): void {
 
     //Calcule the size of the squares
 
-    board.innerHTML = '';
+    board.innerHTML = ''
+    board.appendChild
     const boardSize = board.offsetWidth;
     const squareSize = boardSize / 8 - 0.1;
     const html = new DocumentFragment();
+
+    let div = document.createElement("div")
+    div.setAttribute("id", "div-message")
+
+    let divContent = document.createElement("div")
+    divContent.setAttribute("id", "title-message")
+    div.append(divContent)
+    
+    divContent = document.createElement("div")
+    divContent.setAttribute("id", "message")
+    div.append(divContent)
+    html.append(div)
 
     //Create and put on the board all the squares created
 
@@ -598,9 +683,10 @@ function popBoard(): void {
         }
     }
     board.append(html);
+    if (verifyIfKingUnderAttack(turn)) popKingCheck();
 };
 
-//Place piece in the square reference
+//Place the piece in the square reference
 
 function placePiece(piece: piece, squareReference: HTMLElement): void {
     squareReference.innerHTML = piece.aparence;
@@ -624,7 +710,6 @@ function foundPieceBySquare(squareReference: [number, number] | HTMLElement): pi
         }
     }
     return false;
-    
 }
 
 //Get the square DOM reference from the position[x, y]
@@ -653,53 +738,161 @@ function handleClickSquareEvent(squareReference: HTMLElement): void{
     if (piece){
         selectedPiece = piece;
         placeValidMoves(piece);
+        placeValidSpecialMoves(piece);
     } 
 }
 
 //Place all valid moves of a piece
 
 function placeValidMoves(piece: piece): void {
-    const moves: [number, number][] = piece.moveSet();
-    for (let i = 0 ; i < moves.length ; i++){
-        const squareReference = getSquareFromPositions([moves[i][0], moves[i][1]]);
-        const pieceTarget = foundPieceBySquare(squareReference)
-        if (pieceTarget){
+    const moves: [number, number][] = returnMoveSetThatNotCheckOwnKing(piece.moveSet(), piece);
+
+    moves.forEach(([x, y]) => {
+        const squareReference = getSquareFromPositions([x, y]);
+        const pieceTarget = foundPieceBySquare(squareReference);
+        
+        if (pieceTarget) {
+            // Se houver uma peça no quadrado, marca como possível captura
             squareReference.classList.add("square-take");
-            squareReference.addEventListener("click", function() {
+            squareReference.addEventListener("click", () => {
                 handleClickTakeEvent(piece, pieceTarget);
             });
         } else {
+            // Se não houver peça no quadrado, marca como possível movimento
             squareReference.classList.add("square-move");
-            squareReference.addEventListener("click", function() {
+            squareReference.addEventListener("click", () => {
                 handleClickMoveEvent(piece, squareReference);
             });
-        } 
-            
-    }
+        }
+    });
+}
+
+function placeValidSpecialMoves(piece: piece): void {
+    if (!("specialMoveSet" in piece)) return
+    const moves: specialMove[] = piece.specialMoveSet();
+    moves.forEach(move => {
+        let squareReference: HTMLElement;
+        switch (move) {
+            case 'enPassant':
+                const direction1: number = currentEnPassant.color == 'black'? 1 : -1;
+                const moveY1 = currentEnPassant.positionY + direction1;
+
+                if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0) break;
+                
+                squareReference = getSquareFromPositions([currentEnPassant.positionX, moveY1])
+                squareReference.classList.add("square-take");
+                squareReference.addEventListener("click", () => {
+                    handleClickEnPassantEvent(piece, squareReference);
+                });
+                break;
+            case 'twoSquares':
+                const direction2: number = selectedPiece.color == 'black'? -2 : 2;
+                const moveY2 = selectedPiece.positionY + direction2;
+
+                if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0) break;
+                
+                squareReference = getSquareFromPositions([selectedPiece.positionX, moveY2]);
+                squareReference.classList.add("square-move");
+                squareReference.addEventListener("click", () => {
+                    handleClickTwoSquaresEvent(piece, squareReference);
+                });
+                break;
+            case 'longCastle':
+                if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0) break;
+                squareReference = getSquareFromPositions([3, selectedPiece.positionY]);
+                squareReference.classList.add("square-move");
+                squareReference.addEventListener("click", () => {
+                    handleClickLongCastleEvent(piece, squareReference);
+                });
+                break;
+            case 'shortCastle':
+                if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0) break;
+                squareReference = getSquareFromPositions([7, selectedPiece.positionY]);
+                squareReference.classList.add("square-move");
+                squareReference.addEventListener("click", () => {
+                    handleClickShortCastleEvent(piece, squareReference);
+                });
+                break;
+        
+            default:
+                break;
+        }
+    })
 }
 
 //Process the piece to be taked
 
 function handleClickTakeEvent(piece: piece, pieceTarget: piece): void{
-    switchFlagNeverMovedIfHave(piece)
     movePiece(piece, [pieceTarget.positionX, pieceTarget.positionY]);
     takePiece(pieceTarget);
-    switchTurn();
-    popBoard();
+    processTransitionToNextTurn();
 }
 
 //Process the squared to be moved to
 
-function handleClickMoveEvent(piece: piece, squareReference: HTMLElement): void{
-    switchFlagNeverMovedIfHave(piece)
+function handleClickMoveEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+    if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference)
     movePiece(piece, squareReference);
-    switchTurn();
-    popBoard();
+    processTransitionToNextTurn();
 }
 
-//Check if the position is in the board range
+//Process the special move en passant
 
-function checkIfPositionsExists(squareReference: [number, number]): false | [number, number]{
+function handleClickEnPassantEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+    if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
+    movePiece(piece, squareReference);
+    takePiece(currentEnPassant);
+    processTransitionToNextTurn();
+}
+
+//Process the pawn two square move
+
+function handleClickTwoSquaresEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+    if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
+    movePiece(piece, squareReference);
+    currentEnPassant = selectedPiece;
+    processTransitionToNextTurn('passant');
+}
+
+//Process the short castle
+
+function handleClickShortCastleEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+    if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
+    movePiece(piece, squareReference);
+    const rook: piece | false = foundPieceBySquare([8, selectedPiece.positionY]);
+    if (rook) rook.positionX = 6
+    processTransitionToNextTurn();
+}
+
+//Process the long castle
+
+function handleClickLongCastleEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+    if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
+    movePiece(piece, squareReference);
+    const rook: piece | false = foundPieceBySquare([1, selectedPiece.positionY]);
+    if (rook) rook.positionX = 4
+    processTransitionToNextTurn();
+}
+
+//Process the common processes of the transition turn
+
+function processTransitionToNextTurn(nullCurrentPassant?: 'passant'){
+    if (!nullCurrentPassant) currentEnPassant = null;
+    switchFlagNeverMovedIfHave(selectedPiece);
+    switchTurn();
+    popBoard();
+    const check = verifyIfKingUnderAttack(turn);
+    const noMoves: boolean = verifyIfNoMovesToDo();
+    if (check) popKingCheck();
+    if (noMoves){
+        if (check) setFinalMessage("Vitória", `${turn == 'black'? 'Brancas':'Pretas'} vencem`)
+        else setFinalMessage("Empate", "Afogamento")
+    }
+}
+
+//verify if the position is in the board range
+
+function verifyIfPositionsExists(squareReference: [number, number]): false | [number, number]{
     if (squareReference[0] >= 1 && squareReference[0] <= 8){
         if (squareReference[1] >= 1 && squareReference[1] <= 8){
             return squareReference;
@@ -711,7 +904,8 @@ function checkIfPositionsExists(squareReference: [number, number]): false | [num
 //Take the piece
 
 function takePiece(piece: piece){
-    pieces.splice(pieces.findIndex(e => e.pieceId == piece.pieceId), 1);
+    pieces.splice(pieces.map(i => i.pieceId).indexOf(piece.pieceId), 1);
+    if (piece.name == 'King' ) console.log("Renan venceu")
 }
 
 //Move the piece to the target square
@@ -722,6 +916,8 @@ function movePiece(piece: piece, squareReference: HTMLElement | [number, number]
     piece.positionY = squareReference[1]
 }
 
+//Switch the turn to the opponent 
+
 function switchTurn(): void{
     if (turn == 'black'){
         turn = 'white'
@@ -730,8 +926,191 @@ function switchTurn(): void{
     }
 }
 
+function returnKingReference(color: 'black' | 'white'): piece | false{
+    for (let i = 0 ; i< pieces.length ; i++){
+        if (pieces[i].color == color && pieces[i] instanceof King){
+            return pieces[i];
+        }
+    }
+    return false;
+}
+
+function verifyIfKingUnderAttack(color: 'black' | 'white'): boolean{
+    const king: piece | false = returnKingReference(color);
+    if (king ) if(verifyIfSquareUnderAttack([king.positionX, king.positionY])) return true;
+    return false;
+}
+
+
+//Search if the square is attacked
+
+function verifyIfSquareUnderAttack(squareReference: HTMLElement | [number, number]): boolean{
+    if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
+
+    //Get a array with only oponnent pieces
+    const oponnentPieces: piece[] = pieces.filter(x => x.color != turn);
+    for (let i = 0 ; i < oponnentPieces.length ; i++){
+
+        //Get the 
+        const piece: piece = oponnentPieces[i];
+        const takeSet: [number, number][] = piece.takeSet();
+        for (let j = 0 ; j < takeSet.length ; j++){
+            if (takeSet[j][0] == squareReference[0] && takeSet[j][1] == squareReference[1]) return true;
+        }
+    }
+    return false;
+}
+
+//Switch tue flag "neverMoved" to false if the piece have it
+
 function switchFlagNeverMovedIfHave(piece: piece): void{
-    if (piece instanceof Pawn) piece.neverMoved = false;
-    if (piece instanceof King) piece.neverMoved = false;
-    if (piece instanceof Rook) piece.neverMoved = false;
+    if ("neverMoved" in piece) piece.neverMoved = false;
+}
+
+//Verify if a certain move set will check the player himself
+
+function returnMoveSetThatNotCheckOwnKing(moveSet: [number, number][], piece: piece): [number, number][]{
+    const newMoveSet: [number, number][] = [];
+
+    //Store original position of the piece
+    const positionX = piece.positionX;
+    const positionY = piece.positionY;
+
+    //Verify move by move if this leaves own king vulnerable
+    for (let i = 0 ; i < moveSet.length ; i++){
+        const targetPiece: piece | false = foundPieceBySquare([moveSet[i][0], moveSet[i][1]]);
+        if (targetPiece) takePiece(targetPiece);
+        piece.positionX = moveSet[i][0];
+        piece.positionY = moveSet[i][1];
+        if (!verifyIfKingUnderAttack(turn)) newMoveSet.push(moveSet[i]);
+        if (targetPiece) pieces.push(targetPiece);
+    }
+
+    //Return the piece to it original position
+    piece.positionX = positionX;
+    piece.positionY = positionY;
+
+    return newMoveSet;
+}
+
+//Verify if a certain special move set will check the player himself
+
+function returnSpecialMoveSetThatNotCheckOwnKing(specialMoveSet: specialMove[], piece: piece): specialMove[]{
+    const newSpecialMoveSet: specialMove[] = [];
+    specialMoveSet.forEach(specialMoveSet => {
+        switch (specialMoveSet) {
+            case 'enPassant':
+                //for each vulnerable en passant piece color, set the piece thats will take it to stay 1 square in front of them
+                const direction1: number = currentEnPassant.color == 'black'? 1 : -1;
+
+                //Set the position of the taker move
+                const moveY1 = currentEnPassant.positionY + direction1;
+
+                //If theres none target piece, something wents wrong.
+                const pieceTarget = currentEnPassant;
+                if (!pieceTarget) throw console.error('Falha ao determinar alvo do en passant.');
+
+                //Take off the board the target piece to simulate the move and see if its put/keep the king on danger
+                takePiece(pieceTarget);
+                if (returnMoveSetThatNotCheckOwnKing([[currentEnPassant.positionX, moveY1]], piece).length == 0){
+                    pieces.push(pieceTarget);
+                    break;
+                } 
+                //Give the piece back to the board on it original position
+                pieces.push(pieceTarget);
+
+                //Put the move inside the return list
+                newSpecialMoveSet.push(specialMoveSet);
+                break;
+            case 'twoSquares':
+                //For each pawn color, set the direction of the move
+                const direction2: number = piece.color == 'black'? -2 : 2;
+
+                //Set the move
+                const moveY2 = piece.positionY + direction2;   
+                
+                //Simulate the move and see if its put/keep the king on danger
+                if (returnMoveSetThatNotCheckOwnKing([[piece.positionX, moveY2]], piece).length == 0) break;
+
+                //If dont, put the move inside the return list
+                newSpecialMoveSet.push(specialMoveSet);
+                break;
+            case 'longCastle':
+                //The long castle move will never get there if its an invalid move, because it have its own check on the class
+                newSpecialMoveSet.push(specialMoveSet);
+
+                break;
+                case 'shortCastle':
+                //The short castle move will never get there if its an invalid move, because it have its own check on the class
+                newSpecialMoveSet.push(specialMoveSet);
+                
+                break;
+            default:
+                break;
+        }
+    })
+    return newSpecialMoveSet
+}
+
+//Verify if theres no moves to do
+
+function verifyIfNoMovesToDo(): boolean{
+    //Get the own king reference
+    const king: false | piece = returnKingReference(turn)
+    
+    //If theres no king on the board, thats unexpected. Throws a error
+    if (!king) throw console.error('O rei não foi encontrado!');
+
+    //Get the moveset of the king
+    const moves: [number, number][] = returnMoveSetThatNotCheckOwnKing(king.moveSet(), king);
+
+    //If the king can move and avoid check, theres at least one move left.
+    if (moves.length > 0){
+        console.log(1, moves)
+        return false
+    } 
+
+    //Get a array with only oponnent pieces
+    const allyPieces: piece[] = pieces.filter(x => x.color == turn);
+    for (let i = 0 ; i < allyPieces.length ; i++){
+        const piece: piece = allyPieces[i];
+
+        //Get the piece move set to know if its left the king safe
+        const moveSet: [number, number][] = piece.moveSet();
+        if (returnMoveSetThatNotCheckOwnKing(moveSet, piece).length != 0) {
+            console.log(2, returnMoveSetThatNotCheckOwnKing(moveSet, piece), piece)
+            return false
+        }
+        
+        //Get the piece special move set (if it have) to know if its left the king safe
+        const specialMoveSet: [number, number][] = piece.moveSet();
+        if ("specialMoveSet" in piece)
+        if (returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece).length != 0){
+            console.log(3, returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece), piece)
+            return false
+        } 
+    }
+    //If nothing of this happens, then there are no more moves left
+    return true;
+}
+
+//Set a final message to end the game
+
+function setFinalMessage(title: string, message: string){
+    const DOMdivMessage = validateDOM(document.getElementById("div-message"), 'Div mensagem não encontrada')
+    const DOMtitleMessage = validateDOM(document.getElementById("title-message"), 'Título da mensagem não encontrada')
+    const DOMmessage = validateDOM(document.getElementById("message"), 'mensagem não encontrada')
+
+    if (!(DOMdivMessage || DOMtitleMessage || DOMmessage)) return
+    DOMdivMessage.style.display = 'block'
+    DOMtitleMessage.innerHTML = title
+    DOMmessage.innerHTML = message
+}
+
+function popKingCheck(){
+    const king: piece | false = returnKingReference(turn)
+    if (!king) return
+    const squareReference: HTMLElement = getSquareFromPositions([king.positionX, king.positionY])
+/*     squareReference.style.textShadow = '2px 0 #f00, -2px 0 #f00, 0 2px #f00, 0 -2px #f00, 1px 1px #f00, -1px -1px #f00, 1px -1px #f00, -1px 1px #f00'; */
+    squareReference.style.background = '#f00';
 }
