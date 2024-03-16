@@ -754,6 +754,7 @@ function handleClickSquareEvent(squareReference: HTMLElement): void{
 
 function placeValidMoves(piece: PieceType): void {
     const moves: [number, number][] = returnMoveSetThatNotCheckOwnKing(piece.moveSet(), piece);
+    if (checkPawnPromotion()) return;
 
     moves.forEach(([x, y]) => {
         const squareReference = getSquareFromPositions([x, y]);
@@ -776,7 +777,8 @@ function placeValidMoves(piece: PieceType): void {
 }
 
 function placeValidSpecialMoves(piece: PieceType): void {
-    if (!("specialMoveSet" in piece)) return
+    if (!("specialMoveSet" in piece)) return;
+    if (checkPawnPromotion()) return;
     const moves: specialMove[] = piece.specialMoveSet();
     moves.forEach(move => {
         let squareReference: HTMLElement;

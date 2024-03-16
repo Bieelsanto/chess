@@ -678,6 +678,8 @@ function handleClickSquareEvent(squareReference) {
 //Place all valid moves of a piece
 function placeValidMoves(piece) {
     var moves = returnMoveSetThatNotCheckOwnKing(piece.moveSet(), piece);
+    if (checkPawnPromotion())
+        return;
     moves.forEach(function (_a) {
         var x = _a[0], y = _a[1];
         var squareReference = getSquareFromPositions([x, y]);
@@ -700,6 +702,8 @@ function placeValidMoves(piece) {
 }
 function placeValidSpecialMoves(piece) {
     if (!("specialMoveSet" in piece))
+        return;
+    if (checkPawnPromotion())
         return;
     var moves = piece.specialMoveSet();
     moves.forEach(function (move) {
