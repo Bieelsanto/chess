@@ -1,6 +1,5 @@
 //Create the Piece classes
-
-type piece = Pawn | Knight | Bishop | Rook | King | Queen;
+type PieceType = Pawn | Knight | Bishop | Rook | King | Queen;
 type specialMove = 'enPassant' | 'longCastle' | 'shortCastle' | 'twoSquares'
 
 var pieceId: number = 0;
@@ -97,7 +96,7 @@ class Pawn extends Piece {
 
     moveSetFront(moveSet: [number, number][]): void{
         let move: [number, number];
-        let piece: piece | false;
+        let piece: PieceType | false;
         const relativeY: number = (this.color == 'black') ? this.positionY - 1 : this.positionY + 1
 
         //Move set to one square move
@@ -159,7 +158,7 @@ class Rook extends Piece {
 
     moveSetTopBottom(moveSet: [number, number][], take?: 'take'): void {
         let move: [number, number];
-        let piece: piece | false;
+        let piece: PieceType | false;
 
         for (let i = this.positionY + 1 ; i <= 8 ; i++){
             if (!this.validateMove(moveSet, [this.positionX, i], take)) break;
@@ -172,7 +171,7 @@ class Rook extends Piece {
     
     moveSetRightLeft(moveSet: [number, number][], take?: 'take'): void {
         let move: [number, number];
-        let piece: piece | false;
+        let piece: PieceType | false;
 
         for (let i = this.positionX + 1 ; i <= 8 ; i++){
             if (!this.validateMove(moveSet, [i, this.positionY], take)) break;
@@ -560,7 +559,7 @@ const parameters: {
         description: string;
         size: string;
     },
-    initialPosition: piece[]
+    initialPosition: PieceType[]
 } = {
     board: {
         value: "board",
@@ -568,12 +567,12 @@ const parameters: {
         size: "70vmin"
     },
     initialPosition: [
-        new Rook([1, 8], "black"),
+/*         new Rook([1, 8], "black"),
         new Knight([2, 8], "black"),
         new Bishop([3, 8], "black"),
-        new Queen([4, 8], "black"),
+        new Queen([4, 8], "black"), */
         new King([5, 8], "black"),
-        new Bishop([6, 8], "black"),
+/*         new Bishop([6, 8], "black"),
         new Knight([7, 8], "black"),
         new Rook([8, 8], "black"),
         new Pawn([1, 7], "black"),
@@ -583,7 +582,7 @@ const parameters: {
         new Pawn([5, 7], "black"),
         new Pawn([6, 7], "black"),
         new Pawn([7, 7], "black"),
-        new Pawn([8, 7], "black"),
+        new Pawn([8, 7], "black"), */
 
         new Rook([1, 1], "white"),
         new Knight([2, 1], "white"),
@@ -593,7 +592,7 @@ const parameters: {
         new Bishop([6, 1], "white"),
         new Knight([7, 1], "white"),
         new Rook([8, 1], "white"),
-        new Pawn([1, 2], "white"),
+        new Pawn([1, 6], "white"),
         new Pawn([2, 2], "white"),
         new Pawn([3, 2], "white"),
         new Pawn([4, 2], "white"),
@@ -607,11 +606,13 @@ const parameters: {
 //Store DOM references and initial configurations to use on runtime
 
 var turn: "black" | "white" = 'white';
-var selectedPiece: piece;
-var currentEnPassant: piece;
-const pieces: piece[] = parameters.initialPosition;
+var selectedPiece: PieceType;
+var currentEnPassant: PieceType;
+const pieces: PieceType[] = parameters.initialPosition;
 const board: HTMLElement = validateDOM(document.getElementById(parameters.board.value), parameters.board.description);
-
+const DivMessagePopUp: HTMLElement = validateDOM(document.getElementById('div-message'), `Div da Mensagem`);
+const TitleMessagePopUp: HTMLElement = validateDOM(document.getElementById('title-message'), `Título da Mensagem`);
+const MessagePopUp: HTMLElement = validateDOM(document.getElementById('message'), `Mensagem`);
 //Run main function
 
 main();
@@ -625,7 +626,7 @@ function main(): void {
 function initialize(): void{
     setSizeBoard(parameters.board.size);
     popBoard();
-    window.onresize = popBoard;
+    window.onresize = resized;
 };
 
 //Board size settings set
@@ -635,6 +636,13 @@ function setSizeBoard(size: string): void {
     board.style.height = size;
 };
 
+//Main function of resize event
+
+function resized(){
+    popBoard();
+    handleKingState();
+}
+
 //Pop up the divs on the board
 
 function popBoard(): void {
@@ -642,10 +650,11 @@ function popBoard(): void {
     //Calcule the size of the squares
 
     board.innerHTML = ''
-    board.appendChild
     const boardSize = board.offsetWidth;
     const squareSize = boardSize / 8 - 0.1;
     const html = new DocumentFragment();
+
+    //Build the message HTML
 
     let div = document.createElement("div")
     div.setAttribute("id", "div-message")
@@ -670,7 +679,7 @@ function popBoard(): void {
             div.classList.add("square");
             div.style.fontSize = `${squareSize-10}px`;
             div.setAttribute("id", `${ x }-${ y }`);         
-            const piece: piece | false = foundPieceBySquare([x, y]);
+            const piece: PieceType | false = foundPieceBySquare([x, y]);
             if (piece){
                 placePiece(piece, div);
                 if (piece.color == turn){
@@ -683,12 +692,11 @@ function popBoard(): void {
         }
     }
     board.append(html);
-    if (verifyIfKingUnderAttack(turn)) popKingCheck();
 };
 
 //Place the piece in the square reference
 
-function placePiece(piece: piece, squareReference: HTMLElement): void {
+function placePiece(piece: PieceType, squareReference: HTMLElement): void {
     squareReference.innerHTML = piece.aparence;
     if (piece.color == 'black'){
         squareReference.style.color = '#000';
@@ -700,7 +708,7 @@ function placePiece(piece: piece, squareReference: HTMLElement): void {
 
 //If a piece exists on the square, return the piece. otherwise, return false.
 
-function foundPieceBySquare(squareReference: [number, number] | HTMLElement): piece | false {
+function foundPieceBySquare(squareReference: [number, number] | HTMLElement): PieceType | false {
     if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
     for (let i = 0 ; i < pieces.length ; i++){
         if (pieces[i].positionX == squareReference[0]){
@@ -734,7 +742,7 @@ function getPositionsFromSquare(squareReference: HTMLElement): [number, number] 
 function handleClickSquareEvent(squareReference: HTMLElement): void{
     popBoard();
     console.log(`Clicou em ${getPositionsFromSquare(squareReference)}`);
-    const piece: piece | false = foundPieceBySquare(squareReference);
+    const piece: PieceType | false = foundPieceBySquare(squareReference);
     if (piece){
         selectedPiece = piece;
         placeValidMoves(piece);
@@ -744,7 +752,7 @@ function handleClickSquareEvent(squareReference: HTMLElement): void{
 
 //Place all valid moves of a piece
 
-function placeValidMoves(piece: piece): void {
+function placeValidMoves(piece: PieceType): void {
     const moves: [number, number][] = returnMoveSetThatNotCheckOwnKing(piece.moveSet(), piece);
 
     moves.forEach(([x, y]) => {
@@ -767,7 +775,7 @@ function placeValidMoves(piece: piece): void {
     });
 }
 
-function placeValidSpecialMoves(piece: piece): void {
+function placeValidSpecialMoves(piece: PieceType): void {
     if (!("specialMoveSet" in piece)) return
     const moves: specialMove[] = piece.specialMoveSet();
     moves.forEach(move => {
@@ -786,9 +794,11 @@ function placeValidSpecialMoves(piece: piece): void {
                 });
                 break;
             case 'twoSquares':
-                const direction2: number = selectedPiece.color == 'black'? -2 : 2;
-                const moveY2 = selectedPiece.positionY + direction2;
-
+                const directionTwoSquare: number = selectedPiece.color == 'black'? -2 : 2;
+                const directionOneSquare: number = selectedPiece.color == 'black'? -1 : 1;
+                const moveY2 = selectedPiece.positionY + directionTwoSquare;
+                const moveY3 = selectedPiece.positionY + directionOneSquare;
+                if(foundPieceBySquare([selectedPiece.positionX, moveY3])) break;
                 if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0) break;
                 
                 squareReference = getSquareFromPositions([selectedPiece.positionX, moveY2]);
@@ -822,7 +832,7 @@ function placeValidSpecialMoves(piece: piece): void {
 
 //Process the piece to be taked
 
-function handleClickTakeEvent(piece: piece, pieceTarget: piece): void{
+function handleClickTakeEvent(piece: PieceType, pieceTarget: PieceType): void{
     movePiece(piece, [pieceTarget.positionX, pieceTarget.positionY]);
     takePiece(pieceTarget);
     processTransitionToNextTurn();
@@ -830,7 +840,7 @@ function handleClickTakeEvent(piece: piece, pieceTarget: piece): void{
 
 //Process the squared to be moved to
 
-function handleClickMoveEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function handleClickMoveEvent(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference)
     movePiece(piece, squareReference);
     processTransitionToNextTurn();
@@ -838,7 +848,7 @@ function handleClickMoveEvent(piece: piece, squareReference: HTMLElement | [numb
 
 //Process the special move en passant
 
-function handleClickEnPassantEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function handleClickEnPassantEvent(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
     movePiece(piece, squareReference);
     takePiece(currentEnPassant);
@@ -847,7 +857,7 @@ function handleClickEnPassantEvent(piece: piece, squareReference: HTMLElement | 
 
 //Process the pawn two square move
 
-function handleClickTwoSquaresEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function handleClickTwoSquaresEvent(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
     movePiece(piece, squareReference);
     currentEnPassant = selectedPiece;
@@ -856,20 +866,20 @@ function handleClickTwoSquaresEvent(piece: piece, squareReference: HTMLElement |
 
 //Process the short castle
 
-function handleClickShortCastleEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function handleClickShortCastleEvent(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
     movePiece(piece, squareReference);
-    const rook: piece | false = foundPieceBySquare([8, selectedPiece.positionY]);
+    const rook: PieceType | false = foundPieceBySquare([8, selectedPiece.positionY]);
     if (rook) rook.positionX = 6
     processTransitionToNextTurn();
 }
 
 //Process the long castle
 
-function handleClickLongCastleEvent(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function handleClickLongCastleEvent(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof HTMLElement) squareReference = getPositionsFromSquare(squareReference);
     movePiece(piece, squareReference);
-    const rook: piece | false = foundPieceBySquare([1, selectedPiece.positionY]);
+    const rook: PieceType | false = foundPieceBySquare([1, selectedPiece.positionY]);
     if (rook) rook.positionX = 4
     processTransitionToNextTurn();
 }
@@ -879,18 +889,77 @@ function handleClickLongCastleEvent(piece: piece, squareReference: HTMLElement |
 function processTransitionToNextTurn(nullCurrentPassant?: 'passant'){
     if (!nullCurrentPassant) currentEnPassant = null;
     switchFlagNeverMovedIfHave(selectedPiece);
+    handlePawnPromotion();
     switchTurn();
     popBoard();
+    handleKingState();
+}
+
+//Handle the end game state if it on end
+
+function handleKingState(){
     const check = verifyIfKingUnderAttack(turn);
     const noMoves: boolean = verifyIfNoMovesToDo();
     if (check) popKingCheck();
     if (noMoves){
-        if (check) setFinalMessage("Vitória", `${turn == 'black'? 'Brancas':'Pretas'} vencem`)
-        else setFinalMessage("Empate", "Afogamento")
+        if (check) setPopUp("Vitória", `${turn == 'black'? 'Brancas':'Pretas'} vencem`)
+        else setPopUp("Empate", "Afogamento")
     }
 }
 
-//verify if the position is in the board range
+function checkPawnPromotion(): Pawn | false{
+    for (let i = 1 ; i <= 8 ; i++){
+        const whitePawn: PieceType | false = foundPieceBySquare([i, 8])
+        const blackPawn: PieceType | false = foundPieceBySquare([i, 1])
+
+        if(whitePawn) if(whitePawn instanceof Pawn) return whitePawn
+        if(blackPawn) if(blackPawn instanceof Pawn) return blackPawn
+    }
+    return false
+}
+
+function handlePawnPromotion(){
+    const pawn: PieceType | false = checkPawnPromotion();
+    if (!pawn) return;
+    popBoard();
+    const squareReference = getSquareFromPositions([pawn.positionX, pawn.positionY]);
+    if (!squareReference) return;
+    const html = new DocumentFragment();
+
+    const boardSize = board.offsetWidth;
+    const squareSize = boardSize / 8 - 0.1;
+    console.log(squareSize)
+
+    const promotionOptions: string[] = ['Queen', 'Knight', 'Bishop', 'Rook'];
+    promotionOptions.forEach(option => {
+        const piece: PieceType = new (window as any)[option]([-10, -10], turn);
+        
+        const div: HTMLElement = document.createElement("div");
+        div.classList.add("square-black");
+        div.style.width = `${ squareSize }px`;
+        div.style.height = `${ squareSize }px`;
+        div.style.fontSize = `${squareSize-10}px`;
+        div.classList.add("square");
+        div.innerHTML = piece.aparence
+        div.addEventListener("click", function() {
+            piece.positionX = pawn.positionX;
+            piece.positionY = pawn.positionY;
+            takePiece(pawn);
+            pieces.push(piece);
+            cleanPopUp();
+            popBoard();
+            handleKingState();
+        });
+        html.append(div);
+    })
+    MessagePopUp.innerHTML = ''
+    MessagePopUp.append(html);
+    DivMessagePopUp.style.display = 'block'
+    MessagePopUp.style.display = 'flex'
+    TitleMessagePopUp.innerHTML = 'Escolha'
+}
+
+//Verify if the position is in the board range
 
 function verifyIfPositionsExists(squareReference: [number, number]): false | [number, number]{
     if (squareReference[0] >= 1 && squareReference[0] <= 8){
@@ -903,14 +972,13 @@ function verifyIfPositionsExists(squareReference: [number, number]): false | [nu
 
 //Take the piece
 
-function takePiece(piece: piece){
+function takePiece(piece: PieceType){
     pieces.splice(pieces.map(i => i.pieceId).indexOf(piece.pieceId), 1);
-    if (piece.name == 'King' ) console.log("Renan venceu")
 }
 
 //Move the piece to the target square
 
-function movePiece(piece: piece, squareReference: HTMLElement | [number, number]): void{
+function movePiece(piece: PieceType, squareReference: HTMLElement | [number, number]): void{
     if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
     piece.positionX = squareReference[0]
     piece.positionY = squareReference[1]
@@ -926,7 +994,7 @@ function switchTurn(): void{
     }
 }
 
-function returnKingReference(color: 'black' | 'white'): piece | false{
+function returnKingReference(color: 'black' | 'white'): PieceType | false{
     for (let i = 0 ; i< pieces.length ; i++){
         if (pieces[i].color == color && pieces[i] instanceof King){
             return pieces[i];
@@ -936,7 +1004,7 @@ function returnKingReference(color: 'black' | 'white'): piece | false{
 }
 
 function verifyIfKingUnderAttack(color: 'black' | 'white'): boolean{
-    const king: piece | false = returnKingReference(color);
+    const king: PieceType | false = returnKingReference(color);
     if (king ) if(verifyIfSquareUnderAttack([king.positionX, king.positionY])) return true;
     return false;
 }
@@ -948,11 +1016,11 @@ function verifyIfSquareUnderAttack(squareReference: HTMLElement | [number, numbe
     if (squareReference instanceof(HTMLElement)) squareReference = getPositionsFromSquare(squareReference);
 
     //Get a array with only oponnent pieces
-    const oponnentPieces: piece[] = pieces.filter(x => x.color != turn);
+    const oponnentPieces: PieceType[] = pieces.filter(x => x.color != turn);
     for (let i = 0 ; i < oponnentPieces.length ; i++){
 
         //Get the 
-        const piece: piece = oponnentPieces[i];
+        const piece: PieceType = oponnentPieces[i];
         const takeSet: [number, number][] = piece.takeSet();
         for (let j = 0 ; j < takeSet.length ; j++){
             if (takeSet[j][0] == squareReference[0] && takeSet[j][1] == squareReference[1]) return true;
@@ -963,13 +1031,13 @@ function verifyIfSquareUnderAttack(squareReference: HTMLElement | [number, numbe
 
 //Switch tue flag "neverMoved" to false if the piece have it
 
-function switchFlagNeverMovedIfHave(piece: piece): void{
+function switchFlagNeverMovedIfHave(piece: PieceType): void{
     if ("neverMoved" in piece) piece.neverMoved = false;
 }
 
 //Verify if a certain move set will check the player himself
 
-function returnMoveSetThatNotCheckOwnKing(moveSet: [number, number][], piece: piece): [number, number][]{
+function returnMoveSetThatNotCheckOwnKing(moveSet: [number, number][], piece: PieceType): [number, number][]{
     const newMoveSet: [number, number][] = [];
 
     //Store original position of the piece
@@ -978,7 +1046,7 @@ function returnMoveSetThatNotCheckOwnKing(moveSet: [number, number][], piece: pi
 
     //Verify move by move if this leaves own king vulnerable
     for (let i = 0 ; i < moveSet.length ; i++){
-        const targetPiece: piece | false = foundPieceBySquare([moveSet[i][0], moveSet[i][1]]);
+        const targetPiece: PieceType | false = foundPieceBySquare([moveSet[i][0], moveSet[i][1]]);
         if (targetPiece) takePiece(targetPiece);
         piece.positionX = moveSet[i][0];
         piece.positionY = moveSet[i][1];
@@ -995,7 +1063,7 @@ function returnMoveSetThatNotCheckOwnKing(moveSet: [number, number][], piece: pi
 
 //Verify if a certain special move set will check the player himself
 
-function returnSpecialMoveSetThatNotCheckOwnKing(specialMoveSet: specialMove[], piece: piece): specialMove[]{
+function returnSpecialMoveSetThatNotCheckOwnKing(specialMoveSet: specialMove[], piece: PieceType): specialMove[]{
     const newSpecialMoveSet: specialMove[] = [];
     specialMoveSet.forEach(specialMoveSet => {
         switch (specialMoveSet) {
@@ -1056,7 +1124,7 @@ function returnSpecialMoveSetThatNotCheckOwnKing(specialMoveSet: specialMove[], 
 
 function verifyIfNoMovesToDo(): boolean{
     //Get the own king reference
-    const king: false | piece = returnKingReference(turn)
+    const king: false | PieceType = returnKingReference(turn)
     
     //If theres no king on the board, thats unexpected. Throws a error
     if (!king) throw console.error('O rei não foi encontrado!');
@@ -1066,19 +1134,17 @@ function verifyIfNoMovesToDo(): boolean{
 
     //If the king can move and avoid check, theres at least one move left.
     if (moves.length > 0){
-        console.log(1, moves)
         return false
     } 
 
     //Get a array with only oponnent pieces
-    const allyPieces: piece[] = pieces.filter(x => x.color == turn);
+    const allyPieces: PieceType[] = pieces.filter(x => x.color == turn);
     for (let i = 0 ; i < allyPieces.length ; i++){
-        const piece: piece = allyPieces[i];
+        const piece: PieceType = allyPieces[i];
 
         //Get the piece move set to know if its left the king safe
         const moveSet: [number, number][] = piece.moveSet();
         if (returnMoveSetThatNotCheckOwnKing(moveSet, piece).length != 0) {
-            console.log(2, returnMoveSetThatNotCheckOwnKing(moveSet, piece), piece)
             return false
         }
         
@@ -1086,7 +1152,6 @@ function verifyIfNoMovesToDo(): boolean{
         const specialMoveSet: [number, number][] = piece.moveSet();
         if ("specialMoveSet" in piece)
         if (returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece).length != 0){
-            console.log(3, returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece), piece)
             return false
         } 
     }
@@ -1096,21 +1161,23 @@ function verifyIfNoMovesToDo(): boolean{
 
 //Set a final message to end the game
 
-function setFinalMessage(title: string, message: string){
-    const DOMdivMessage = validateDOM(document.getElementById("div-message"), 'Div mensagem não encontrada')
-    const DOMtitleMessage = validateDOM(document.getElementById("title-message"), 'Título da mensagem não encontrada')
-    const DOMmessage = validateDOM(document.getElementById("message"), 'mensagem não encontrada')
-
-    if (!(DOMdivMessage || DOMtitleMessage || DOMmessage)) return
-    DOMdivMessage.style.display = 'block'
-    DOMtitleMessage.innerHTML = title
-    DOMmessage.innerHTML = message
+function setPopUp(title: string, message: string){
+    DivMessagePopUp.style.display = 'block';
+    TitleMessagePopUp.innerHTML = title;
+    MessagePopUp.innerHTML = message;
 }
 
+function cleanPopUp(){
+    DivMessagePopUp.style.display = 'none';
+    TitleMessagePopUp.innerHTML = '';
+    MessagePopUp.innerHTML = '';
+    MessagePopUp.style.display = 'block'
+}
+
+//Pop a style in the king square to display check
 function popKingCheck(){
-    const king: piece | false = returnKingReference(turn)
-    if (!king) return
-    const squareReference: HTMLElement = getSquareFromPositions([king.positionX, king.positionY])
-/*     squareReference.style.textShadow = '2px 0 #f00, -2px 0 #f00, 0 2px #f00, 0 -2px #f00, 1px 1px #f00, -1px -1px #f00, 1px -1px #f00, -1px 1px #f00'; */
+    const king: PieceType | false = returnKingReference(turn);
+    if (!king) return;
+    const squareReference: HTMLElement = getSquareFromPositions([king.positionX, king.positionY]);
     squareReference.style.background = '#f00';
 }

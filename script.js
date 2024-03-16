@@ -1,4 +1,3 @@
-//Create the Piece classes
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -519,22 +518,22 @@ var parameters = {
         size: "70vmin"
     },
     initialPosition: [
-        new Rook([1, 8], "black"),
-        new Knight([2, 8], "black"),
-        new Bishop([3, 8], "black"),
-        new Queen([4, 8], "black"),
+        /*         new Rook([1, 8], "black"),
+                new Knight([2, 8], "black"),
+                new Bishop([3, 8], "black"),
+                new Queen([4, 8], "black"), */
         new King([5, 8], "black"),
-        new Bishop([6, 8], "black"),
-        new Knight([7, 8], "black"),
-        new Rook([8, 8], "black"),
-        new Pawn([1, 7], "black"),
-        new Pawn([2, 7], "black"),
-        new Pawn([3, 7], "black"),
-        new Pawn([4, 7], "black"),
-        new Pawn([5, 7], "black"),
-        new Pawn([6, 7], "black"),
-        new Pawn([7, 7], "black"),
-        new Pawn([8, 7], "black"),
+        /*         new Bishop([6, 8], "black"),
+                new Knight([7, 8], "black"),
+                new Rook([8, 8], "black"),
+                new Pawn([1, 7], "black"),
+                new Pawn([2, 7], "black"),
+                new Pawn([3, 7], "black"),
+                new Pawn([4, 7], "black"),
+                new Pawn([5, 7], "black"),
+                new Pawn([6, 7], "black"),
+                new Pawn([7, 7], "black"),
+                new Pawn([8, 7], "black"), */
         new Rook([1, 1], "white"),
         new Knight([2, 1], "white"),
         new Bishop([3, 1], "white"),
@@ -543,7 +542,7 @@ var parameters = {
         new Bishop([6, 1], "white"),
         new Knight([7, 1], "white"),
         new Rook([8, 1], "white"),
-        new Pawn([1, 2], "white"),
+        new Pawn([1, 6], "white"),
         new Pawn([2, 2], "white"),
         new Pawn([3, 2], "white"),
         new Pawn([4, 2], "white"),
@@ -559,6 +558,9 @@ var selectedPiece;
 var currentEnPassant;
 var pieces = parameters.initialPosition;
 var board = validateDOM(document.getElementById(parameters.board.value), parameters.board.description);
+var DivMessagePopUp = validateDOM(document.getElementById('div-message'), "Div da Mensagem");
+var TitleMessagePopUp = validateDOM(document.getElementById('title-message'), "T\u00EDtulo da Mensagem");
+var MessagePopUp = validateDOM(document.getElementById('message'), "Mensagem");
 //Run main function
 main();
 function main() {
@@ -569,7 +571,7 @@ function main() {
 function initialize() {
     setSizeBoard(parameters.board.size);
     popBoard();
-    window.onresize = popBoard;
+    window.onresize = resized;
 }
 ;
 //Board size settings set
@@ -578,14 +580,19 @@ function setSizeBoard(size) {
     board.style.height = size;
 }
 ;
+//Main function of resize event
+function resized() {
+    popBoard();
+    handleKingState();
+}
 //Pop up the divs on the board
 function popBoard() {
     //Calcule the size of the squares
     board.innerHTML = '';
-    board.appendChild;
     var boardSize = board.offsetWidth;
     var squareSize = boardSize / 8 - 0.1;
     var html = new DocumentFragment();
+    //Build the message HTML
     var div = document.createElement("div");
     div.setAttribute("id", "div-message");
     var divContent = document.createElement("div");
@@ -618,8 +625,6 @@ function popBoard() {
         }
     }
     board.append(html);
-    if (verifyIfKingUnderAttack(turn))
-        popKingCheck();
 }
 ;
 //Place the piece in the square reference
@@ -712,8 +717,12 @@ function placeValidSpecialMoves(piece) {
                 });
                 break;
             case 'twoSquares':
-                var direction2 = selectedPiece.color == 'black' ? -2 : 2;
-                var moveY2 = selectedPiece.positionY + direction2;
+                var directionTwoSquare = selectedPiece.color == 'black' ? -2 : 2;
+                var directionOneSquare = selectedPiece.color == 'black' ? -1 : 1;
+                var moveY2 = selectedPiece.positionY + directionTwoSquare;
+                var moveY3 = selectedPiece.positionY + directionOneSquare;
+                if (foundPieceBySquare([selectedPiece.positionX, moveY3]))
+                    break;
                 if (returnSpecialMoveSetThatNotCheckOwnKing([move], piece).length == 0)
                     break;
                 squareReference = getSquareFromPositions([selectedPiece.positionX, moveY2]);
@@ -799,20 +808,77 @@ function processTransitionToNextTurn(nullCurrentPassant) {
     if (!nullCurrentPassant)
         currentEnPassant = null;
     switchFlagNeverMovedIfHave(selectedPiece);
+    handlePawnPromotion();
     switchTurn();
     popBoard();
+    handleKingState();
+}
+//Handle the end game state if it on end
+function handleKingState() {
     var check = verifyIfKingUnderAttack(turn);
     var noMoves = verifyIfNoMovesToDo();
     if (check)
         popKingCheck();
     if (noMoves) {
         if (check)
-            setFinalMessage("Vitória", "".concat(turn == 'black' ? 'Brancas' : 'Pretas', " vencem"));
+            setPopUp("Vitória", "".concat(turn == 'black' ? 'Brancas' : 'Pretas', " vencem"));
         else
-            setFinalMessage("Empate", "Afogamento");
+            setPopUp("Empate", "Afogamento");
     }
 }
-//verify if the position is in the board range
+function checkPawnPromotion() {
+    for (var i = 1; i <= 8; i++) {
+        var whitePawn = foundPieceBySquare([i, 8]);
+        var blackPawn = foundPieceBySquare([i, 1]);
+        if (whitePawn)
+            if (whitePawn instanceof Pawn)
+                return whitePawn;
+        if (blackPawn)
+            if (blackPawn instanceof Pawn)
+                return blackPawn;
+    }
+    return false;
+}
+function handlePawnPromotion() {
+    var pawn = checkPawnPromotion();
+    if (!pawn)
+        return;
+    popBoard();
+    var squareReference = getSquareFromPositions([pawn.positionX, pawn.positionY]);
+    if (!squareReference)
+        return;
+    var html = new DocumentFragment();
+    var boardSize = board.offsetWidth;
+    var squareSize = boardSize / 8 - 0.1;
+    console.log(squareSize);
+    var promotionOptions = ['Queen', 'Knight', 'Bishop', 'Rook'];
+    promotionOptions.forEach(function (option) {
+        var piece = new window[option]([-10, -10], turn);
+        var div = document.createElement("div");
+        div.classList.add("square-black");
+        div.style.width = "".concat(squareSize, "px");
+        div.style.height = "".concat(squareSize, "px");
+        div.style.fontSize = "".concat(squareSize - 10, "px");
+        div.classList.add("square");
+        div.innerHTML = piece.aparence;
+        div.addEventListener("click", function () {
+            piece.positionX = pawn.positionX;
+            piece.positionY = pawn.positionY;
+            takePiece(pawn);
+            pieces.push(piece);
+            cleanPopUp();
+            popBoard();
+            handleKingState();
+        });
+        html.append(div);
+    });
+    MessagePopUp.innerHTML = '';
+    MessagePopUp.append(html);
+    DivMessagePopUp.style.display = 'block';
+    MessagePopUp.style.display = 'flex';
+    TitleMessagePopUp.innerHTML = 'Escolha';
+}
+//Verify if the position is in the board range
 function verifyIfPositionsExists(squareReference) {
     if (squareReference[0] >= 1 && squareReference[0] <= 8) {
         if (squareReference[1] >= 1 && squareReference[1] <= 8) {
@@ -824,8 +890,6 @@ function verifyIfPositionsExists(squareReference) {
 //Take the piece
 function takePiece(piece) {
     pieces.splice(pieces.map(function (i) { return i.pieceId; }).indexOf(piece.pieceId), 1);
-    if (piece.name == 'King')
-        console.log("Renan venceu");
 }
 //Move the piece to the target square
 function movePiece(piece, squareReference) {
@@ -964,7 +1028,6 @@ function verifyIfNoMovesToDo() {
     var moves = returnMoveSetThatNotCheckOwnKing(king.moveSet(), king);
     //If the king can move and avoid check, theres at least one move left.
     if (moves.length > 0) {
-        console.log(1, moves);
         return false;
     }
     //Get a array with only oponnent pieces
@@ -974,14 +1037,12 @@ function verifyIfNoMovesToDo() {
         //Get the piece move set to know if its left the king safe
         var moveSet = piece.moveSet();
         if (returnMoveSetThatNotCheckOwnKing(moveSet, piece).length != 0) {
-            console.log(2, returnMoveSetThatNotCheckOwnKing(moveSet, piece), piece);
             return false;
         }
         //Get the piece special move set (if it have) to know if its left the king safe
         var specialMoveSet = piece.moveSet();
         if ("specialMoveSet" in piece)
             if (returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece).length != 0) {
-                console.log(3, returnSpecialMoveSetThatNotCheckOwnKing(piece.specialMoveSet(), piece), piece);
                 return false;
             }
     }
@@ -989,21 +1050,22 @@ function verifyIfNoMovesToDo() {
     return true;
 }
 //Set a final message to end the game
-function setFinalMessage(title, message) {
-    var DOMdivMessage = validateDOM(document.getElementById("div-message"), 'Div mensagem não encontrada');
-    var DOMtitleMessage = validateDOM(document.getElementById("title-message"), 'Título da mensagem não encontrada');
-    var DOMmessage = validateDOM(document.getElementById("message"), 'mensagem não encontrada');
-    if (!(DOMdivMessage || DOMtitleMessage || DOMmessage))
-        return;
-    DOMdivMessage.style.display = 'block';
-    DOMtitleMessage.innerHTML = title;
-    DOMmessage.innerHTML = message;
+function setPopUp(title, message) {
+    DivMessagePopUp.style.display = 'block';
+    TitleMessagePopUp.innerHTML = title;
+    MessagePopUp.innerHTML = message;
 }
+function cleanPopUp() {
+    DivMessagePopUp.style.display = 'none';
+    TitleMessagePopUp.innerHTML = '';
+    MessagePopUp.innerHTML = '';
+    MessagePopUp.style.display = 'block';
+}
+//Pop a style in the king square to display check
 function popKingCheck() {
     var king = returnKingReference(turn);
     if (!king)
         return;
     var squareReference = getSquareFromPositions([king.positionX, king.positionY]);
-    /*     squareReference.style.textShadow = '2px 0 #f00, -2px 0 #f00, 0 2px #f00, 0 -2px #f00, 1px 1px #f00, -1px -1px #f00, 1px -1px #f00, -1px 1px #f00'; */
     squareReference.style.background = '#f00';
 }

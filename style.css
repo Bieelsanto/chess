@@ -42,19 +42,7 @@ body {
     background: linear-gradient(rgb(15, 14, 14), rgb(42, 34, 34));
 }
 
-.square-move{
-    background: none;
-    background-color: rgb(43, 182, 78);
-    border: 2px solid green
-}
-
-.square-take{
-    background: none;
-    background-color: rgb(182, 43, 43);
-    border: 2px solid red
-}
-
-.square-black, .square-white{
+.square{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -67,6 +55,18 @@ body {
     border: 3px solid rgb(55, 80, 224)
 }
 
+.square-move{
+    background: none;
+    background-color: rgb(43, 182, 78);
+    border: 2px solid green
+}
+
+.square-take{
+    background: none;
+    background-color: rgb(182, 43, 43);
+    border: 2px solid red
+}
+
 .informations{
     width: 100vw;
 }
@@ -74,7 +74,7 @@ body {
 #title{
     font-size: 100px;
     color: rgb(213, 216, 223);
-    text-shadow: 4px 4px 10px rgba(9, 255, 0, 0.274);
+    text-shadow: 6px 3px 1px rgba(0, 255, 21, 0.514), -6px -3px 1px rgba(255, 0, 0, 0.479), 6px -3px 1px rgba(0, 255, 221, 0.514);
 }
 
 #div-message {
