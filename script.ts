@@ -567,12 +567,12 @@ const parameters: {
         size: "70vmin"
     },
     initialPosition: [
-/*         new Rook([1, 8], "black"),
+        new Rook([1, 8], "black"),
         new Knight([2, 8], "black"),
         new Bishop([3, 8], "black"),
-        new Queen([4, 8], "black"), */
+        new Queen([4, 8], "black"),
         new King([5, 8], "black"),
-/*         new Bishop([6, 8], "black"),
+        new Bishop([6, 8], "black"),
         new Knight([7, 8], "black"),
         new Rook([8, 8], "black"),
         new Pawn([1, 7], "black"),
@@ -582,7 +582,7 @@ const parameters: {
         new Pawn([5, 7], "black"),
         new Pawn([6, 7], "black"),
         new Pawn([7, 7], "black"),
-        new Pawn([8, 7], "black"), */
+        new Pawn([8, 7], "black"),
 
         new Rook([1, 1], "white"),
         new Knight([2, 1], "white"),
@@ -592,7 +592,7 @@ const parameters: {
         new Bishop([6, 1], "white"),
         new Knight([7, 1], "white"),
         new Rook([8, 1], "white"),
-        new Pawn([1, 6], "white"),
+        new Pawn([1, 2], "white"),
         new Pawn([2, 2], "white"),
         new Pawn([3, 2], "white"),
         new Pawn([4, 2], "white"),
